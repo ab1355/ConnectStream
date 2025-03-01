@@ -5,6 +5,9 @@ import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
+import { db } from "./db";
+import { spaces, spaceMembers } from "@shared/schema";
+import { eq, or, and } from "drizzle-orm";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -104,11 +107,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Search routes
+  // Spaces route
   app.get("/api/spaces", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
-      res.json([]);
+      const spacesList = await db.select().from(spaces)
+        .leftJoin(spaceMembers, eq(spaces.id, spaceMembers.spaceId))
+        .where(
+          or(
+            eq(spaces.privacy, "public"),
+            and(
+              eq(spaceMembers.userId, req.user.id),
+              or(
+                eq(spaces.privacy, "private"),
+                eq(spaces.privacy, "secret")
+              )
+            )
+          )
+        )
+        .orderBy(spaces.createdAt);
+
+      res.json(spacesList);
     } catch (error) {
       console.error("Error fetching spaces:", error);
       res.status(500).json({ error: "Failed to fetch spaces" });
