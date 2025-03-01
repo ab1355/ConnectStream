@@ -13,7 +13,11 @@ export const users = pgTable("users", {
   email: text("email"),
   emailVerified: boolean("email_verified").default(false),
   emailDigestEnabled: boolean("email_digest_enabled").default(true),
-  emailDigestFrequency: text("email_digest_frequency").default("daily"), // 'daily', 'weekly'
+  emailDigestFrequency: text("email_digest_frequency").default("daily"),
+  themePreference: text("theme_preference").default("system"), // 'light', 'dark', 'system'
+  themeColor: text("theme_color").default("blue"), // primary color
+  themeRadius: text("theme_radius").default("0.5"), // border radius
+  themeVariant: text("theme_variant").default("professional"), // 'professional', 'tint', 'vibrant'
   approvedAt: timestamp("approved_at"),
   approvedBy: serial("approved_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -219,6 +223,10 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   emailDigestEnabled: true,
   emailDigestFrequency: true,
+  themePreference: true,
+  themeColor: true,
+  themeRadius: true,
+  themeVariant: true,
 });
 
 export const insertSpaceSchema = createInsertSchema(spaces).pick({

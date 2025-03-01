@@ -18,6 +18,7 @@ import BookmarksPage from "@/pages/bookmarks-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import CustomSlugPage from "@/pages/custom-slug-page";
 import EmailSettingsPage from "@/pages/settings/email-settings-page";
+import ThemeSettingsPage from "@/pages/settings/theme-settings-page";
 
 function Router() {
   return (
@@ -34,6 +35,7 @@ function Router() {
       <ProtectedRoute path="/bookmarks" component={BookmarksPage} />
       <ProtectedRoute path="/custom-slug" component={CustomSlugPage} />
       <ProtectedRoute path="/settings/email" component={EmailSettingsPage} />
+      <ProtectedRoute path="/settings/theme" component={ThemeSettingsPage} />
       <ProtectedRoute path="/admin/user-approvals" component={UserApprovalsPage} />
       <Route component={NotFound} />
     </Switch>

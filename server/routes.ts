@@ -846,6 +846,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this endpoint after the email preferences endpoint
+  app.patch("/api/user/theme", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const schema = z.object({
+        themePreference: z.enum(["light", "dark", "system"]),
+        themeColor: z.string(),
+        themeRadius: z.string(),
+        themeVariant: z.enum(["professional", "tint", "vibrant"]),
+      });
+
+      const validation = schema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [updatedUser] = await db.update(users)
+        .set({
+          themePreference: validation.data.themePreference,
+          themeColor: validation.data.themeColor,
+          themeRadius: validation.data.themeRadius,
+          themeVariant: validation.data.themeVariant,
+        })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating theme preferences:", error);
+      res.status(500).json({ error: "Failed to update theme preferences" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
@@ -900,7 +934,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     ws.on('close', () => {
-      clients.delete(userId);
+            clients.delete(userId);
     });
   });
 
