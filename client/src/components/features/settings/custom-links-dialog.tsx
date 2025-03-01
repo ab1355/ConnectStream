@@ -3,8 +3,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertCustomLinkSchema, type InsertCustomLink } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
 import * as Icons from "lucide-react";
 import {
   Dialog,
@@ -36,6 +36,7 @@ const commonIcons = ["Link", "Globe", "Facebook", "Twitter", "Instagram", "Youtu
 export function CustomLinksDialog() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
+  const queryClient = useQueryClient();
 
   const form = useForm<InsertCustomLink>({
     resolver: zodResolver(insertCustomLinkSchema),
