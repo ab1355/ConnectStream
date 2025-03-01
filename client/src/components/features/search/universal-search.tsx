@@ -10,14 +10,14 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { User, Post } from "@shared/schema";
-import { Search } from "lucide-react";
+import { Search, User as UserIcon, FileText, Layout, BookOpen, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function UniversalSearch() {
   const [open, setOpen] = useState(false);
   const [, setLocation] = useLocation();
 
-  // Keyboard shortcut to open search
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
       if (e.key === "k" && (e.metaKey || e.ctrlKey)) {
@@ -36,6 +36,15 @@ export function UniversalSearch() {
   const { data: posts } = useQuery<Post[]>({ 
     queryKey: ["/api/posts"],
   });
+  const { data: spaces } = useQuery({ 
+    queryKey: ["/api/spaces"],
+  });
+  const { data: courses } = useQuery({ 
+    queryKey: ["/api/courses"],
+  });
+  const { data: discussions } = useQuery({ 
+    queryKey: ["/api/discussions"],
+  });
 
   const handleSelect = (type: string, id: string) => {
     setOpen(false);
@@ -46,7 +55,15 @@ export function UniversalSearch() {
       case "post":
         setLocation(`/feed/${id}`);
         break;
-      // Add more cases as needed
+      case "space":
+        setLocation(`/spaces/${id}`);
+        break;
+      case "course":
+        setLocation(`/courses/${id}`);
+        break;
+      case "discussion":
+        setLocation(`/discussions/${id}`);
+        break;
     }
   };
 
@@ -65,9 +82,10 @@ export function UniversalSearch() {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Type to search across the platform..." />
+        <CommandInput placeholder="Search across the platform (members, posts, spaces, courses, discussions)..." />
         <CommandList>
           <CommandEmpty>No results found.</CommandEmpty>
+
           {users && users.length > 0 && (
             <CommandGroup heading="Members">
               {users.map((user) => (
@@ -75,11 +93,18 @@ export function UniversalSearch() {
                   key={user.id}
                   onSelect={() => handleSelect("member", user.id.toString())}
                 >
-                  <span>{user.displayName || user.username}</span>
+                  <div className="flex items-center">
+                    <UserIcon className="mr-2 h-4 w-4" />
+                    <Avatar className="h-6 w-6 mr-2">
+                      <AvatarFallback>{user.displayName?.[0] || user.username[0]}</AvatarFallback>
+                    </Avatar>
+                    <span>{user.displayName || user.username}</span>
+                  </div>
                 </CommandItem>
               ))}
             </CommandGroup>
           )}
+
           {posts && posts.length > 0 && (
             <CommandGroup heading="Posts">
               {posts.map((post) => (
@@ -87,7 +112,50 @@ export function UniversalSearch() {
                   key={post.id}
                   onSelect={() => handleSelect("post", post.id.toString())}
                 >
+                  <FileText className="mr-2 h-4 w-4" />
                   <span>{post.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {spaces && spaces.length > 0 && (
+            <CommandGroup heading="Spaces">
+              {spaces.map((space) => (
+                <CommandItem
+                  key={space.id}
+                  onSelect={() => handleSelect("space", space.id.toString())}
+                >
+                  <Layout className="mr-2 h-4 w-4" />
+                  <span>{space.name}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {courses && courses.length > 0 && (
+            <CommandGroup heading="Courses">
+              {courses.map((course) => (
+                <CommandItem
+                  key={course.id}
+                  onSelect={() => handleSelect("course", course.id.toString())}
+                >
+                  <BookOpen className="mr-2 h-4 w-4" />
+                  <span>{course.title}</span>
+                </CommandItem>
+              ))}
+            </CommandGroup>
+          )}
+
+          {discussions && discussions.length > 0 && (
+            <CommandGroup heading="Discussions">
+              {discussions.map((discussion) => (
+                <CommandItem
+                  key={discussion.id}
+                  onSelect={() => handleSelect("discussion", discussion.id.toString())}
+                >
+                  <MessageSquare className="mr-2 h-4 w-4" />
+                  <span>{discussion.title}</span>
                 </CommandItem>
               ))}
             </CommandGroup>

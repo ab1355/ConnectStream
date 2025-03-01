@@ -4,8 +4,7 @@ import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
-import { insertMessageSchema } from "@shared/schema"; // Assuming this schema exists
-
+import { insertMessageSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -66,8 +65,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
       const users = Array.from(storage.users.values())
-        .filter(u => u.id !== req.user?.id) 
-        .map(({ password, ...user }) => user); 
+        .filter(u => u.id !== req.user?.id)
+        .map(({ password, ...user }) => user);
       res.json(users);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -105,6 +104,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Search routes
+  app.get("/api/spaces", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching spaces:", error);
+      res.status(500).json({ error: "Failed to fetch spaces" });
+    }
+  });
+
+  app.get("/api/courses", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching courses:", error);
+      res.status(500).json({ error: "Failed to fetch courses" });
+    }
+  });
+
+  app.get("/api/discussions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      res.json([]);
+    } catch (error) {
+      console.error("Error fetching discussions:", error);
+      res.status(500).json({ error: "Failed to fetch discussions" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
@@ -122,7 +152,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('message', (data) => {
       try {
         const message = JSON.parse(data.toString());
-        // Broadcast to all connected clients except sender
         clients.forEach((client, id) => {
           if (id !== userId && client.readyState === WebSocket.OPEN) {
             client.send(JSON.stringify(message));
