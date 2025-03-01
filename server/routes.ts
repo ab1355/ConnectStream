@@ -7,10 +7,11 @@ import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
 import { spaces, spaceMembers, users } from "@shared/schema"; // Added import for users table
-import { eq, or, and } from "drizzle-orm";
+import { eq, or, and, sql } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema } from "@shared/schema";
 import { polls, pollOptions, pollResponses } from "@shared/schema";
+import { hashtags, postHashtags, mentions } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -28,6 +29,49 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Hashtags routes
+  app.get("/api/hashtags/trending", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const trendingHashtags = await db.select()
+        .from(hashtags)
+        .orderBy(hashtags.count, "desc")
+        .limit(10);
+      res.json(trendingHashtags);
+    } catch (error) {
+      console.error("Error fetching trending hashtags:", error);
+      res.status(500).json({ error: "Failed to fetch trending hashtags" });
+    }
+  });
+
+  app.get("/api/users/search", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const query = req.query.q as string;
+      if (!query) return res.json([]);
+
+      const matchingUsers = await db.select({
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl
+      })
+      .from(users)
+      .where(
+        or(
+          sql`${users.username} ILIKE ${`%${query}%`}`,
+          sql`${users.displayName} ILIKE ${`%${query}%`}`
+        )
+      )
+      .limit(5);
+
+      res.json(matchingUsers);
+    } catch (error) {
+      console.error("Error searching users:", error);
+      res.status(500).json({ error: "Failed to search users" });
+    }
+  });
+
   app.post("/api/posts", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
@@ -35,10 +79,61 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!validation.success) {
         return res.status(400).json(validation.error);
       }
-      const post = await storage.createPost({
-        ...validation.data,
-        authorId: req.user.id
-      });
+
+      // Extract mentions and hashtags from content
+      const mentionRegex = /@(\w+)/g;
+      const hashtagRegex = /#(\w+)/g;
+
+      const mentions = [...validation.data.content.matchAll(mentionRegex)].map(m => m[1]);
+      const hashtagNames = [...validation.data.content.matchAll(hashtagRegex)].map(h => h[1]);
+
+      // Create post
+      const [post] = await db.insert(posts)
+        .values({
+          ...validation.data,
+          authorId: req.user.id,
+          createdAt: new Date()
+        })
+        .returning();
+
+      // Handle mentions
+      if (mentions.length > 0) {
+        const mentionedUsers = await db.select()
+          .from(users)
+          .where(sql`${users.username} = ANY(${mentions})`);
+
+        await db.insert(mentions)
+          .values(mentionedUsers.map(user => ({
+            postId: post.id,
+            userId: user.id,
+            createdAt: new Date()
+          })));
+      }
+
+      // Handle hashtags
+      if (hashtagNames.length > 0) {
+        for (const name of hashtagNames) {
+          // Try to find existing hashtag or create new one
+          const [hashtag] = await db.insert(hashtags)
+            .values({ name, count: 1 })
+            .onConflictDoUpdate({
+              target: hashtags.name,
+              set: { 
+                count: sql`${hashtags.count} + 1`,
+                lastUsedAt: new Date()
+              }
+            })
+            .returning();
+
+          await db.insert(postHashtags)
+            .values({
+              postId: post.id,
+              hashtagId: hashtag.id,
+              createdAt: new Date()
+            });
+        }
+      }
+
       res.status(201).json(post);
     } catch (error) {
       console.error("Error creating post:", error);
@@ -79,7 +174,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
         .from(users)
         .where(
-          eq(users.id, req.user?.id ?? 0) //This line was causing the error.  Changed to select only the current user.
+          eq(users.id, req.user?.id ?? 0) 
         );
       res.json(usersList);
     } catch (error) {

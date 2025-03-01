@@ -82,6 +82,28 @@ export const pollResponses = pgTable("poll_responses", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
+export const hashtags = pgTable("hashtags", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  count: integer("count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  lastUsedAt: timestamp("last_used_at").defaultNow().notNull()
+});
+
+export const postHashtags = pgTable("post_hashtags", {
+  id: serial("id").primaryKey(),
+  postId: serial("post_id").references(() => posts.id),
+  hashtagId: serial("hashtag_id").references(() => hashtags.id),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
+export const mentions = pgTable("mentions", {
+  id: serial("id").primaryKey(),
+  postId: serial("post_id").references(() => posts.id),
+  userId: serial("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull()
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -136,6 +158,11 @@ export const insertPollResponseSchema = createInsertSchema(pollResponses).pick({
   optionId: true
 });
 
+export const insertHashtagSchema = createInsertSchema(hashtags).pick({
+  name: true
+});
+
+
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSpace = z.infer<typeof insertSpaceSchema>;
 export type InsertSpaceMember = z.infer<typeof insertSpaceMemberSchema>;
@@ -145,6 +172,7 @@ export type InsertComment = z.infer<typeof insertCommentSchema>;
 export type InsertPoll = z.infer<typeof insertPollSchema>;
 export type InsertPollOption = z.infer<typeof insertPollOptionSchema>;
 export type InsertPollResponse = z.infer<typeof insertPollResponseSchema>;
+export type InsertHashtag = z.infer<typeof insertHashtagSchema>;
 
 export type User = typeof users.$inferSelect;
 export type Space = typeof spaces.$inferSelect;
@@ -155,3 +183,6 @@ export type Comment = typeof comments.$inferSelect;
 export type Poll = typeof polls.$inferSelect;
 export type PollOption = typeof pollOptions.$inferSelect;
 export type PollResponse = typeof pollResponses.$inferSelect;
+export type Hashtag = typeof hashtags.$inferSelect;
+export type PostHashtag = typeof postHashtags.$inferSelect;
+export type Mention = typeof mentions.$inferSelect;
