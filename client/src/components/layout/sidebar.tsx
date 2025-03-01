@@ -16,15 +16,15 @@ export function Sidebar() {
   const [location] = useLocation();
 
   return (
-    <aside className="w-64 border-r h-[calc(100vh-3.5rem)] p-4 hidden md:block">
-      <nav className="space-y-2">
+    <aside className="w-64 border-r h-[calc(100vh-3.5rem)] p-4 hidden md:block bg-background">
+      <nav className="space-y-1">
         {navItems.map((item) => (
           <Link key={item.href} href={item.href}>
             <Button
               variant="ghost"
               className={cn(
-                "w-full justify-start",
-                location === item.href && "bg-accent"
+                "w-full justify-start text-muted-foreground hover:text-foreground",
+                location === item.href && "bg-accent text-foreground"
               )}
             >
               <item.icon className="mr-2 h-4 w-4" />
