@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle, Shield, Bookmark, Link2 } from "lucide-react";
+import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle, Shield, Bookmark, Link2, Mail } from "lucide-react";
 import { CustomLinks } from "./custom-links";
 import { CustomLinksDialog } from "@/components/features/settings/custom-links-dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -16,6 +16,7 @@ const navItems = [
   { icon: MessageCircle, label: "Messages", href: "/messages" },
   { icon: Bookmark, label: "Bookmarks", href: "/bookmarks" },
   { icon: Link2, label: "Custom URL", href: "/custom-slug" },
+  { icon: Mail, label: "Email Settings", href: "/settings/email" },
 ];
 
 export function Sidebar() {

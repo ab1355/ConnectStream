@@ -10,6 +10,10 @@ export const users = pgTable("users", {
   role: text("role").default("user").notNull(), // 'user', 'moderator', 'admin'
   status: text("status").default("pending").notNull(), // 'pending', 'approved', 'blocked'
   avatarUrl: text("avatar_url"),
+  email: text("email"),
+  emailVerified: boolean("email_verified").default(false),
+  emailDigestEnabled: boolean("email_digest_enabled").default(true),
+  emailDigestFrequency: text("email_digest_frequency").default("daily"), // 'daily', 'weekly'
   approvedAt: timestamp("approved_at"),
   approvedBy: serial("approved_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -202,6 +206,9 @@ export const insertUserSchema = createInsertSchema(users).pick({
   displayName: true,
   status: true,
   role: true,
+  email: true,
+  emailDigestEnabled: true,
+  emailDigestFrequency: true,
 });
 
 export const insertSpaceSchema = createInsertSchema(spaces).pick({

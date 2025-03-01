@@ -19,6 +19,7 @@ import { insertNotificationSchema } from "@shared/schema";
 import { customLinks } from "@shared/schema";
 import { insertCustomLinkSchema } from "@shared/schema"; // Import the new schema
 import { posts } from "@shared/schema"; // Add missing import at the top with other imports
+import { z } from "zod"; // Added import for zod
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -780,6 +781,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error blocking user:", error);
       res.status(500).json({ error: "Failed to block user" });
+    }
+  });
+
+  app.patch("/api/user/email-preferences", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const schema = z.object({
+        emailDigestEnabled: z.boolean(),
+        emailDigestFrequency: z.enum(["daily", "weekly"]),
+        email: z.string().email(),
+      });
+
+      const validation = schema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [updatedUser] = await db.update(users)
+        .set({
+          email: validation.data.email,
+          emailDigestEnabled: validation.data.emailDigestEnabled,
+          emailDigestFrequency: validation.data.emailDigestFrequency,
+        })
+        .where(eq(users.id, req.user.id))
+        .returning();
+
+      // For demo purposes, we'll just log what would be sent in the digest
+      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating email preferences:", error);
+      res.status(500).json({ error: "Failed to update email preferences" });
     }
   });
 
