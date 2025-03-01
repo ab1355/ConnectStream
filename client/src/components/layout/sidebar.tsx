@@ -2,6 +2,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle } from "lucide-react";
+import { CustomLinks } from "./custom-links";
 
 const navItems = [
   { icon: Home, label: "Feed", href: "/" },
@@ -34,6 +35,11 @@ export function Sidebar() {
           </Link>
         ))}
       </nav>
+
+      <div className="mt-6">
+        <h2 className="text-sm font-semibold mb-2">Quick Links</h2>
+        <CustomLinks />
+      </div>
     </aside>
   );
 }

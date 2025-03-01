@@ -16,6 +16,7 @@ import { userScores, achievements, userAchievements } from "@shared/schema";
 import { desc } from "drizzle-orm";
 import { notifications } from "@shared/schema";
 import { insertNotificationSchema } from "@shared/schema";
+import { customLinks } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -562,6 +563,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error uploading file:", error);
       res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  app.get("/api/custom-links", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const links = await db.select()
+        .from(customLinks)
+        .orderBy(customLinks.category, customLinks.order);
+
+      res.json(links);
+    } catch (error) {
+      console.error("Error fetching custom links:", error);
+      res.status(500).json({ error: "Failed to fetch custom links" });
     }
   });
 

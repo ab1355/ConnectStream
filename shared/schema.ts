@@ -160,6 +160,16 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const customLinks = pgTable("custom_links", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  url: text("url").notNull(),
+  icon: text("icon").notNull(), // Lucide icon name
+  category: text("category").notNull(), // 'social', 'financial', 'other'
+  order: integer("order").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -250,6 +260,14 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
   link: true,
 });
 
+export const insertCustomLinkSchema = createInsertSchema(customLinks).pick({
+  title: true,
+  url: true,
+  icon: true,
+  category: true,
+  order: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -288,3 +306,6 @@ export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
 
 export type Notification = typeof notifications.$inferSelect;
 export type InsertNotification = z.infer<typeof insertNotificationSchema>;
+
+export type CustomLink = typeof customLinks.$inferSelect;
+export type InsertCustomLink = z.infer<typeof insertCustomLinkSchema>;
