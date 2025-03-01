@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Bell, LogOut } from "lucide-react";
+import { UniversalSearch } from "@/components/features/search/universal-search";
 
 export function Header() {
   const { user, logoutMutation } = useAuth();
@@ -9,6 +10,10 @@ export function Header() {
   return (
     <header className="h-14 border-b px-6 flex items-center justify-between bg-background">
       <div className="font-semibold text-lg">Community Platform</div>
+
+      <div className="flex-1 px-4 md:px-8">
+        <UniversalSearch />
+      </div>
 
       <div className="flex items-center space-x-4">
         <Button variant="ghost" size="icon" className="text-muted-foreground">
