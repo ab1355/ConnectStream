@@ -16,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 export function UniversalSearch() {
   const [open, setOpen] = useState(false);
+  const [search, setSearch] = useState("");
   const [, setLocation] = useLocation();
 
   useEffect(() => {
@@ -46,6 +47,51 @@ export function UniversalSearch() {
     queryKey: ["/api/discussions"],
   });
 
+  // Filter functions for each content type
+  const filterUsers = (users: User[] = []) => {
+    if (!search) return users;
+    const searchLower = search.toLowerCase();
+    return users.filter(
+      user => 
+        user.username.toLowerCase().includes(searchLower) ||
+        user.displayName?.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const filterPosts = (posts: Post[] = []) => {
+    if (!search) return posts;
+    const searchLower = search.toLowerCase();
+    return posts.filter(
+      post => 
+        post.title.toLowerCase().includes(searchLower) ||
+        post.content.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const filterSpaces = (spaces: any[] = []) => {
+    if (!search) return spaces;
+    const searchLower = search.toLowerCase();
+    return spaces.filter(
+      space => space.name.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const filterCourses = (courses: any[] = []) => {
+    if (!search) return courses;
+    const searchLower = search.toLowerCase();
+    return courses.filter(
+      course => course.title.toLowerCase().includes(searchLower)
+    );
+  };
+
+  const filterDiscussions = (discussions: any[] = []) => {
+    if (!search) return discussions;
+    const searchLower = search.toLowerCase();
+    return discussions.filter(
+      discussion => discussion.title.toLowerCase().includes(searchLower)
+    );
+  };
+
   const handleSelect = (type: string, id: string) => {
     setOpen(false);
     switch (type) {
@@ -67,6 +113,19 @@ export function UniversalSearch() {
     }
   };
 
+  const filteredUsers = filterUsers(users);
+  const filteredPosts = filterPosts(posts);
+  const filteredSpaces = filterSpaces(spaces);
+  const filteredCourses = filterCourses(courses);
+  const filteredDiscussions = filterDiscussions(discussions);
+
+  const hasResults = 
+    filteredUsers.length > 0 ||
+    filteredPosts.length > 0 ||
+    filteredSpaces.length > 0 ||
+    filteredCourses.length > 0 ||
+    filteredDiscussions.length > 0;
+
   return (
     <>
       <Button
@@ -82,13 +141,17 @@ export function UniversalSearch() {
       </Button>
 
       <CommandDialog open={open} onOpenChange={setOpen}>
-        <CommandInput placeholder="Search across the platform (members, posts, spaces, courses, discussions)..." />
+        <CommandInput 
+          placeholder="Search across the platform (members, posts, spaces, courses, discussions)..." 
+          value={search}
+          onValueChange={setSearch}
+        />
         <CommandList>
-          <CommandEmpty>No results found.</CommandEmpty>
+          {!hasResults && search && <CommandEmpty>No results found.</CommandEmpty>}
 
-          {users && users.length > 0 && (
+          {filteredUsers.length > 0 && (
             <CommandGroup heading="Members">
-              {users.map((user) => (
+              {filteredUsers.map((user) => (
                 <CommandItem
                   key={user.id}
                   onSelect={() => handleSelect("member", user.id.toString())}
@@ -105,9 +168,9 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {posts && posts.length > 0 && (
+          {filteredPosts.length > 0 && (
             <CommandGroup heading="Posts">
-              {posts.map((post) => (
+              {filteredPosts.map((post) => (
                 <CommandItem
                   key={post.id}
                   onSelect={() => handleSelect("post", post.id.toString())}
@@ -119,9 +182,9 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {spaces && spaces.length > 0 && (
+          {filteredSpaces.length > 0 && (
             <CommandGroup heading="Spaces">
-              {spaces.map((space) => (
+              {filteredSpaces.map((space) => (
                 <CommandItem
                   key={space.id}
                   onSelect={() => handleSelect("space", space.id.toString())}
@@ -133,9 +196,9 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {courses && courses.length > 0 && (
+          {filteredCourses.length > 0 && (
             <CommandGroup heading="Courses">
-              {courses.map((course) => (
+              {filteredCourses.map((course) => (
                 <CommandItem
                   key={course.id}
                   onSelect={() => handleSelect("course", course.id.toString())}
@@ -147,9 +210,9 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {discussions && discussions.length > 0 && (
+          {filteredDiscussions.length > 0 && (
             <CommandGroup heading="Discussions">
-              {discussions.map((discussion) => (
+              {filteredDiscussions.map((discussion) => (
                 <CommandItem
                   key={discussion.id}
                   onSelect={() => handleSelect("discussion", discussion.id.toString())}
