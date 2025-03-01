@@ -153,6 +153,9 @@ export const achievements = pgTable("achievements", {
   description: text("description").notNull(),
   points: integer("points").notNull(),
   icon: text("icon").notNull(), // Lucide icon name
+  badgeColor: text("badge_color"), // Color theme for the badge
+  badgeType: text("badge_type").default("achievement").notNull(), // 'achievement', 'rank', 'special'
+  requirement: text("requirement"), // JSON string containing badge requirements
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -275,6 +278,9 @@ export const insertAchievementSchema = createInsertSchema(achievements).pick({
   description: true,
   points: true,
   icon: true,
+  badgeColor: true,
+  badgeType: true,
+  requirement: true,
 });
 
 export const insertNotificationSchema = createInsertSchema(notifications).pick({
@@ -342,3 +348,11 @@ export type InsertCustomLink = z.infer<typeof insertCustomLinkSchema>;
 
 export type Bookmark = typeof bookmarks.$inferSelect;
 export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
+
+export type BadgeDisplay = {
+  name: string;
+  description: string;
+  icon: string;
+  badgeColor?: string;
+  badgeType: string;
+};

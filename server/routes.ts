@@ -18,6 +18,7 @@ import { notifications } from "@shared/schema";
 import { insertNotificationSchema } from "@shared/schema";
 import { customLinks } from "@shared/schema";
 import { insertCustomLinkSchema } from "@shared/schema"; // Import the new schema
+import { posts } from "@shared/schema"; // Add missing import at the top with other imports
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -90,8 +91,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const mentionRegex = /@(\w+)/g;
       const hashtagRegex = /#(\w+)/g;
 
-      const mentions = [...validation.data.content.matchAll(mentionRegex)].map(m => m[1]);
-      const hashtagNames = [...validation.data.content.matchAll(hashtagRegex)].map(h => h[1]);
+      const mentionsArray = Array.from(validation.data.content.matchAll(mentionRegex)).map(m => m[1]);
+      const hashtagsArray = Array.from(validation.data.content.matchAll(hashtagRegex)).map(h => h[1]);
 
       // Create post
       const [post] = await db.insert(posts)
@@ -103,22 +104,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .returning();
 
       // Handle mentions
-      if (mentions.length > 0) {
+      if (mentionsArray.length > 0) {
         const mentionedUsers = await db.select()
           .from(users)
-          .where(sql`${users.username} = ANY(${mentions})`);
+          .where(sql`${users.username} = ANY(${mentionsArray})`);
 
-        await db.insert(mentions)
-          .values(mentionedUsers.map(user => ({
+        await db.insert(mentions).values(
+          mentionedUsers.map(user => ({
             postId: post.id,
             userId: user.id,
             createdAt: new Date()
-          })));
+          }))
+        );
       }
 
       // Handle hashtags
-      if (hashtagNames.length > 0) {
-        for (const name of hashtagNames) {
+      if (hashtagsArray.length > 0) {
+        for (const name of hashtagsArray) {
           // Try to find existing hashtag or create new one
           const [hashtag] = await db.insert(hashtags)
             .values({ name, count: 1 })
@@ -408,6 +410,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         description: achievements.description,
         points: achievements.points,
         icon: achievements.icon,
+        badgeColor: achievements.badgeColor,
+        badgeType: achievements.badgeType,
         earnedAt: userAchievements.earnedAt,
       })
         .from(achievements)
@@ -505,10 +509,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
           authorId: posts.authorId,
         }
       })
-      .from(bookmarks)
-      .innerJoin(posts, eq(posts.id, bookmarks.postId))
-      .where(eq(bookmarks.userId, req.user.id))
-      .orderBy(desc(bookmarks.createdAt));
+        .from(bookmarks)
+        .innerJoin(posts, eq(posts.id, bookmarks.postId))
+        .where(eq(bookmarks.userId, req.user.id))
+        .orderBy(desc(bookmarks.createdAt));
 
       res.json(userBookmarks);
     } catch (error) {

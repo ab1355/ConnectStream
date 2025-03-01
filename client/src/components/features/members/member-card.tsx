@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { MessageSquare, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { useQuery } from "@tanstack/react-query";
+import { UserBadge } from "@/components/features/badges/user-badge";
 
 interface MemberCardProps {
   username: string;
@@ -14,6 +16,15 @@ interface MemberCardProps {
 }
 
 export function MemberCard({ username, displayName, role, status, points, avatarUrl }: MemberCardProps) {
+  // Query user achievements
+  const { data: achievements } = useQuery({
+    queryKey: ["/api/achievements", username],
+    queryFn: async () => {
+      const res = await fetch(`/api/achievements/${username}`);
+      return res.json();
+    },
+  });
+
   return (
     <Card>
       <CardHeader className="text-center">
@@ -42,6 +53,20 @@ export function MemberCard({ username, displayName, role, status, points, avatar
           <Trophy className="h-4 w-4 mr-1" />
           {points} points
         </div>
+        {achievements && achievements.length > 0 && (
+          <div className="mt-4">
+            <h4 className="text-sm font-medium mb-2 text-center">Badges</h4>
+            <div className="flex flex-wrap gap-2 justify-center">
+              {achievements.map((achievement) => (
+                <UserBadge 
+                  key={achievement.id} 
+                  achievement={achievement}
+                  size="sm"
+                />
+              ))}
+            </div>
+          </div>
+        )}
       </CardContent>
       <CardFooter className="justify-center">
         <Button variant="outline" size="sm">
