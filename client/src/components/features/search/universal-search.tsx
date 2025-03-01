@@ -13,6 +13,7 @@ import { User, Post } from "@shared/schema";
 import { Search, User as UserIcon, FileText, Layout, BookOpen, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { DialogTitle } from "@/components/ui/dialog";
 
 export function UniversalSearch() {
   const [open, setOpen] = useState(false);
@@ -140,7 +141,15 @@ export function UniversalSearch() {
         </kbd>
       </Button>
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog 
+        open={open} 
+        onOpenChange={setOpen}
+        aria-describedby="search-description"
+      >
+        <DialogTitle className="sr-only">Search across platform</DialogTitle>
+        <div id="search-description" className="sr-only">
+          Search across members, posts, spaces, courses, and discussions. Use up and down arrows to navigate results.
+        </div>
         <CommandInput 
           placeholder="Search across the platform (members, posts, spaces, courses, discussions)..." 
           value={search}
