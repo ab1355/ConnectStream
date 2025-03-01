@@ -17,6 +17,7 @@ import { desc } from "drizzle-orm";
 import { notifications } from "@shared/schema";
 import { insertNotificationSchema } from "@shared/schema";
 import { customLinks } from "@shared/schema";
+import { insertCustomLinkSchema } from "@shared/schema"; // Import the new schema
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -557,8 +558,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       // TODO: Implement file upload with proper storage
       // For now, return a mock response
-      res.json({ 
-        url: "https://picsum.photos/seed/upload/800/400" 
+      res.json({
+        url: "https://picsum.photos/seed/upload/800/400"
       });
     } catch (error) {
       console.error("Error uploading file:", error);
@@ -578,6 +579,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching custom links:", error);
       res.status(500).json({ error: "Failed to fetch custom links" });
+    }
+  });
+
+  // Add this route after the GET /api/custom-links endpoint
+  app.post("/api/custom-links", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertCustomLinkSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [link] = await db.insert(customLinks)
+        .values({
+          ...validation.data,
+          createdAt: new Date()
+        })
+        .returning();
+
+      res.status(201).json(link);
+    } catch (error) {
+      console.error("Error creating custom link:", error);
+      res.status(500).json({ error: "Failed to create custom link" });
     }
   });
 

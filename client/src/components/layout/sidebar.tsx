@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
 import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle } from "lucide-react";
 import { CustomLinks } from "./custom-links";
+import { CustomLinksDialog } from "@/components/features/settings/custom-links-dialog";
 
 const navItems = [
   { icon: Home, label: "Feed", href: "/" },
@@ -37,7 +38,10 @@ export function Sidebar() {
       </nav>
 
       <div className="mt-6">
-        <h2 className="text-sm font-semibold mb-2">Quick Links</h2>
+        <div className="flex items-center justify-between mb-2">
+          <h2 className="text-sm font-semibold">Quick Links</h2>
+          <CustomLinksDialog />
+        </div>
         <CustomLinks />
       </div>
     </aside>
