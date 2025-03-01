@@ -1,0 +1,148 @@
+Create detailed components with these requirements:
+1. Use 'use client' directive for client-side components
+2. Style with Tailwind CSS utility classes for responsive design
+3. Use Lucide React for icons (from lucide-react package). Do NOT use other UI libraries unless requested
+4. Use stock photos from picsum.photos where appropriate, only valid URLs you know exist
+5. Configure next.config.js image remotePatterns to enable stock photos from picsum.photos
+6. Create root layout.tsx page that wraps necessary navigation items to all pages
+7. MUST implement the navigation elements items in their rightful place i.e. Left sidebar, Top header
+8. Accurately implement necessary grid layouts
+9. Follow proper import practices:
+   - Use @/ path aliases
+   - Keep component imports organized
+   - Update current src/app/page.tsx with new comprehensive code
+   - Don't forget root route (page.tsx) handling
+   - You MUST complete the entire prompt before stopping
+
+Business Community Platform Dashboard UI
+</summary_title>
+
+<image_analysis>
+
+1. Navigation Elements:
+- Top header with: Feed, Spaces, Courses, Members, Leaderboard
+- Left sidebar with: Feed, Members, Spaces, Discussions, Leaderboard, Courses
+- Secondary navigation under COMMUNITIES, UX COMMUNITY, SUPPORT COMMUNITY sections
+- User profile and notifications in top-right corner
+
+
+2. Layout Components:
+- Main container: 1200px max-width
+- Left sidebar: 250px fixed width
+- Content area: Flexible width
+- Right sidebar: 300px fixed width
+- Header height: 60px
+- Padding: 16px consistent spacing
+
+
+3. Content Sections:
+- Main feed area with post creation
+- Recent Activities sidebar
+- Community groups listing
+- Activity feed with timestamps
+- Post interaction controls
+- Media content display area
+
+
+4. Interactive Controls:
+- "Create Post" button (Primary CTA)
+- Post interaction buttons (like, comment, share)
+- Dropdown filters ("All Activities")
+- Navigation links with hover states
+- User avatars with click behavior
+
+
+5. Colors:
+- Primary Purple: #46287C
+- Secondary Blue: #2D7FF9
+- Text Gray: #67758D
+- Background White: #FFFFFF
+- Accent Light Blue: #E8F1FF
+
+
+6. Grid/Layout Structure:
+- Three-column layout
+- Responsive breakpoints at 1200px, 992px, 768px
+- Nested grid for feed items
+- Flexible content containers
+</image_analysis>
+
+<development_planning>
+
+1. Project Structure:
+```
+src/
+├── components/
+│   ├── layout/
+│   │   ├── Header
+│   │   ├── Sidebar
+│   │   └── ContentArea
+│   ├── features/
+│   │   ├── Feed
+│   │   ├── Communities
+│   │   └── Activities
+│   └── shared/
+├── assets/
+├── styles/
+├── hooks/
+└── utils/
+```
+
+
+2. Key Features:
+- Real-time feed updates
+- Community management
+- User authentication
+- Content creation
+- Activity tracking
+
+
+3. State Management:
+```typescript
+interface AppState {
+├── user: {
+│   ├── profile: UserProfile
+│   ├── preferences: UserPreferences
+│   └── notifications: Notification[]
+├── feed: {
+│   ├── posts: Post[]
+│   ├── filters: FilterOptions
+│   └── currentView: ViewType
+├── communities: {
+│   ├── list: Community[]
+│   └── activeCommunity: string
+└── }
+}
+```
+
+
+4. Routes:
+```typescript
+const routes = [
+├── '/dashboard',
+├── '/communities/*',
+├── '/spaces/*',
+├── '/courses/*',
+└── '/leaderboard'
+]
+```
+
+
+5. Component Architecture:
+- HeaderComponent (navigation, search, profile)
+- SidebarComponent (navigation menu)
+- FeedComponent (post list, creation)
+- CommunityComponent (group management)
+- ActivityComponent (recent activities)
+
+
+6. Responsive Breakpoints:
+```scss
+$breakpoints: (
+├── 'desktop': 1200px,
+├── 'tablet': 992px,
+├── 'mobile': 768px,
+└── 'small': 576px
+);
+```
+</development_planning>

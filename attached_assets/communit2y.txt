@@ -1,0 +1,115 @@
+Next.js route structure based on navigation menu items (excluding main route). Make sure to wrap all routes with the component:
+
+Routes:
+- /feed
+- /spaces
+- /courses
+- /members
+- /leaderboard
+- /discussions
+
+Page Implementations:
+/feed:
+Core Purpose: Display personalized content stream of updates, posts, and activities
+Key Components
+- PostCard component for content items
+- ContentFilter for feed customization
+- InfiniteScroll for content loading
+- CreatePost component
+Layout Structure
+- Single column layout for mobile
+- Two column layout for desktop (main feed + sidebar)
+
+/spaces:
+Core Purpose: Show available community spaces and groups
+Key Components
+- SpaceGrid displaying space cards
+- SpaceSearch and filter components
+- CreateSpace button for admins
+- SpaceMembership status indicators
+Layout Structure
+- Grid layout with responsive columns
+- List view option for mobile
+- Sidebar for filters on desktop
+
+/courses:
+Core Purpose: Browse and access learning content
+Key Components
+- CourseCard grid
+- CourseFilter and search
+- ProgressTracker
+- CourseCategories navigation
+Layout Structure
+- Grid layout with 3-4 columns on desktop
+- Single column cards on mobile
+- Sticky category navigation
+
+/members:
+Core Purpose: Directory of community members
+Key Components
+- MemberGrid with profile cards
+- MemberSearch and filters
+- MembershipStatus indicators
+- DirectMessage buttons
+Layout Structure
+- Grid layout with responsive columns
+- List view for mobile
+- Filter sidebar on desktop
+
+/leaderboard:
+Core Purpose: Display user rankings and achievements
+Key Components
+- LeaderboardTable
+- TimeframeSelector
+- AchievementCards
+- UserRankCard
+Layout Structure
+- Full-width table layout
+- Sticky header
+- Condensed mobile view with essential stats
+
+/discussions:
+Core Purpose: Forum-style threaded conversations
+Key Components
+- ThreadList
+- CategoryNavigation
+- CreateThread button
+- SearchDiscussions
+Layout Structure
+- Two-column layout (categories + threads)
+- Single column mobile view
+- Sticky category navigation
+
+Layouts:
+MainLayout:
+- Applicable routes: All routes
+- Core components
+  - Navigation header
+  - Sidebar navigation
+  - Footer
+  - User menu
+- Responsive behavior
+  - Collapsible sidebar on mobile
+  - Sticky header
+  - Bottom navigation bar on mobile
+
+ContentLayout
+- Applicable routes: /feed, /discussions
+- Core components
+  - Content area
+  - Right sidebar
+  - Action buttons
+- Responsive behavior
+  - Single column on mobile
+  - Sidebar moves to bottom on mobile
+
+GridLayout
+- Applicable routes: /spaces, /courses, /members
+- Core components
+  - Filter sidebar
+  - Grid container
+  - Action header
+- Responsive behavior
+  - Adjustable grid columns
+  - Filter modal on mobile
+  - Masonry layout option
