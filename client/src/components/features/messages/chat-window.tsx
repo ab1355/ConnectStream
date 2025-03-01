@@ -9,6 +9,7 @@ import { Send } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { apiRequest, queryClient } from "@/lib/queryClient";
+import { cn } from "@/lib/utils";
 
 interface ChatWindowProps {
   selectedUser: User;
@@ -18,7 +19,7 @@ export function ChatWindow({ selectedUser }: ChatWindowProps) {
   const { user } = useAuth();
   const [socket, setSocket] = useState<WebSocket | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
+
   const form = useForm({
     resolver: zodResolver(insertMessageSchema),
     defaultValues: {
