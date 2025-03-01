@@ -525,6 +525,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // GIF routes
+  app.get("/api/gifs/search", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const params = new URLSearchParams({
+        api_key: process.env.GIPHY_API_KEY!,
+        q: req.query.q as string,
+        limit: req.query.limit as string || "20",
+        rating: "g",
+      });
+
+      const response = await fetch(
+        `https://api.giphy.com/v1/gifs/search?${params}`
+      );
+
+      const data = await response.json();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching GIFs:", error);
+      res.status(500).json({ error: "Failed to fetch GIFs" });
+    }
+  });
+
+  // Media upload route
+  app.post("/api/upload", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // TODO: Implement file upload with proper storage
+      // For now, return a mock response
+      res.json({ 
+        url: "https://picsum.photos/seed/upload/800/400" 
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
 
   const httpServer = createServer(app);
 
