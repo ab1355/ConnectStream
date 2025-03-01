@@ -55,7 +55,7 @@ export function UniversalSearch() {
     return users.filter(
       user => 
         user.username.toLowerCase().includes(searchLower) ||
-        user.displayName?.toLowerCase().includes(searchLower)
+        (user.displayName?.toLowerCase() || '').includes(searchLower)
     );
   };
 
@@ -70,26 +70,29 @@ export function UniversalSearch() {
   };
 
   const filterSpaces = (spaces: any[] = []) => {
-    if (!search.trim()) return [];
+    if (!search.trim() || !spaces) return [];
     const searchLower = search.toLowerCase();
     return spaces.filter(
-      space => space.name.toLowerCase().includes(searchLower)
+      space => 
+        space?.name?.toLowerCase().includes(searchLower)
     );
   };
 
   const filterCourses = (courses: any[] = []) => {
-    if (!search.trim()) return [];
+    if (!search.trim() || !courses) return [];
     const searchLower = search.toLowerCase();
     return courses.filter(
-      course => course.title.toLowerCase().includes(searchLower)
+      course => 
+        course?.title?.toLowerCase().includes(searchLower)
     );
   };
 
   const filterDiscussions = (discussions: any[] = []) => {
-    if (!search.trim()) return [];
+    if (!search.trim() || !discussions) return [];
     const searchLower = search.toLowerCase();
     return discussions.filter(
-      discussion => discussion.title.toLowerCase().includes(searchLower)
+      discussion => 
+        discussion?.title?.toLowerCase().includes(searchLower)
     );
   };
 
