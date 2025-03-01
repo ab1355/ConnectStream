@@ -9,7 +9,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Posts
   app.get("/api/posts", async (req, res) => {
+    if (!req.isAuthenticated()) return res.sendStatus(401);
     const posts = await storage.getAllPosts();
+    // Sort posts by creation date, newest first
+    posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
     res.json(posts);
   });
 
@@ -35,7 +38,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
     const comment = await storage.createComment({
       ...validation.data,
-      authorId: req.user.id
+      authorId: req.user.id,
+      postId: req.body.postId
     });
     res.status(201).json(comment);
   });
