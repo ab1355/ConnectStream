@@ -2,6 +2,7 @@ import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { SpaceGrid } from "@/components/features/spaces/space-grid";
 import { SpaceFilter } from "@/components/features/spaces/space-filter";
+import { CreateSpaceDialog } from "@/components/features/spaces/create-space-dialog";
 
 export default function SpacesPage() {
   return (
@@ -11,7 +12,10 @@ export default function SpacesPage() {
         <Sidebar />
         <main className="flex-1 p-6">
           <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Spaces</h1>
+            <div className="flex justify-between items-center mb-6">
+              <h1 className="text-2xl font-bold">Spaces</h1>
+              <CreateSpaceDialog />
+            </div>
             <SpaceFilter />
             <SpaceGrid />
           </div>

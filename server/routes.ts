@@ -8,6 +8,7 @@ import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
 import { spaces, spaceMembers } from "@shared/schema";
 import { eq, or, and } from "drizzle-orm";
+import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -133,6 +134,40 @@ export async function registerRoutes(app: Express): Promise<Server> {
       res.status(500).json({ error: "Failed to fetch spaces" });
     }
   });
+
+  app.post("/api/spaces", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertSpaceSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [space] = await db.insert(spaces)
+        .values({
+          ...validation.data,
+          ownerId: req.user.id,
+          createdAt: new Date()
+        })
+        .returning();
+
+      // Add owner as the first member and admin
+      await db.insert(spaceMembers)
+        .values({
+          spaceId: space.id,
+          userId: req.user.id,
+          role: "admin",
+          joinedAt: new Date()
+        });
+
+      res.status(201).json(space);
+    } catch (error) {
+      console.error("Error creating space:", error);
+      res.status(500).json({ error: "Failed to create space" });
+    }
+  });
+
 
   app.get("/api/courses", async (req, res) => {
     try {
