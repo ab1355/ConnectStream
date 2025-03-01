@@ -1,6 +1,6 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertPostSchema } from "@shared/schema";
+import { insertPostSchema, type InsertPost } from "@shared/schema";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 
 export function CreatePostForm() {
   const { toast } = useToast();
-  const form = useForm({
+  const form = useForm<InsertPost>({
     resolver: zodResolver(insertPostSchema),
     defaultValues: {
       title: "",
@@ -21,7 +21,7 @@ export function CreatePostForm() {
   });
 
   const createPostMutation = useMutation({
-    mutationFn: async (data: typeof form.getValues) => {
+    mutationFn: async (data: InsertPost) => {
       const res = await apiRequest("POST", "/api/posts", data);
       return res.json();
     },

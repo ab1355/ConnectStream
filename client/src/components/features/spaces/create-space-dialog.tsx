@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertSpaceSchema } from "@shared/schema";
+import { insertSpaceSchema, type InsertSpace } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 
@@ -31,7 +31,7 @@ export function CreateSpaceDialog() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm({
+  const form = useForm<InsertSpace>({
     resolver: zodResolver(insertSpaceSchema),
     defaultValues: {
       name: "",
@@ -41,7 +41,7 @@ export function CreateSpaceDialog() {
   });
 
   const createSpaceMutation = useMutation({
-    mutationFn: async (data: typeof form.getValues) => {
+    mutationFn: async (data: InsertSpace) => {
       const res = await apiRequest("POST", "/api/spaces", data);
       return res.json();
     },

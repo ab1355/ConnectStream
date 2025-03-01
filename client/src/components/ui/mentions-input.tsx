@@ -2,7 +2,7 @@ import { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem } from "@/components/ui/command";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { User } from "@shared/schema";
+import { User, Hashtag } from "@shared/schema";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 interface MentionsInputProps {
@@ -25,7 +25,7 @@ export function MentionsInput({ value, onChange, placeholder, className }: Menti
     enabled: trigger === '@' && searchTerm.length > 0
   });
 
-  const { data: hashtags } = useQuery({
+  const { data: hashtags } = useQuery<Hashtag[]>({
     queryKey: ['/api/hashtags/trending'],
     enabled: trigger === '#'
   });
@@ -118,7 +118,7 @@ export function MentionsInput({ value, onChange, placeholder, className }: Menti
             )}
             {trigger === '#' && hashtags && (
               <CommandGroup>
-                {hashtags.map((hashtag) => (
+                {(hashtags || []).map((hashtag) => (
                   <CommandItem
                     key={hashtag.id}
                     onSelect={() => insertHashtag(hashtag.name)}
