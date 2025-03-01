@@ -67,7 +67,7 @@ export function CreateThreadDialog() {
       <DialogTrigger asChild>
         <Button>Create Thread</Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Thread</DialogTitle>
           <DialogDescription>
