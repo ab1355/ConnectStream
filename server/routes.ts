@@ -4,6 +4,8 @@ import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
+import { insertMessageSchema } from "@shared/schema"; // Assuming this schema exists
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -56,6 +58,50 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating comment:", error);
       res.status(500).json({ error: "Failed to create comment" });
+    }
+  });
+
+  // Users
+  app.get("/api/users", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const users = Array.from(storage.users.values())
+        .filter(u => u.id !== req.user?.id) 
+        .map(({ password, ...user }) => user); 
+      res.json(users);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ error: "Failed to fetch users" });
+    }
+  });
+
+  // Messages
+  app.get("/api/messages/:userId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const messages = await storage.getMessages(parseInt(req.params.userId));
+      res.json(messages);
+    } catch (error) {
+      console.error("Error fetching messages:", error);
+      res.status(500).json({ error: "Failed to fetch messages" });
+    }
+  });
+
+  app.post("/api/messages", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const validation = insertMessageSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+      const message = await storage.createMessage({
+        ...validation.data,
+        senderId: req.user.id
+      });
+      res.status(201).json(message);
+    } catch (error) {
+      console.error("Error sending message:", error);
+      res.status(500).json({ error: "Failed to send message" });
     }
   });
 
