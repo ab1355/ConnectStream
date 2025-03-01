@@ -50,7 +50,7 @@ export function UniversalSearch() {
 
   // Filter functions for each content type
   const filterUsers = (users: User[] = []) => {
-    if (!search) return users;
+    if (!search.trim()) return [];
     const searchLower = search.toLowerCase();
     return users.filter(
       user => 
@@ -60,7 +60,7 @@ export function UniversalSearch() {
   };
 
   const filterPosts = (posts: Post[] = []) => {
-    if (!search) return posts;
+    if (!search.trim()) return [];
     const searchLower = search.toLowerCase();
     return posts.filter(
       post => 
@@ -70,7 +70,7 @@ export function UniversalSearch() {
   };
 
   const filterSpaces = (spaces: any[] = []) => {
-    if (!search) return spaces;
+    if (!search.trim()) return [];
     const searchLower = search.toLowerCase();
     return spaces.filter(
       space => space.name.toLowerCase().includes(searchLower)
@@ -78,7 +78,7 @@ export function UniversalSearch() {
   };
 
   const filterCourses = (courses: any[] = []) => {
-    if (!search) return courses;
+    if (!search.trim()) return [];
     const searchLower = search.toLowerCase();
     return courses.filter(
       course => course.title.toLowerCase().includes(searchLower)
@@ -86,7 +86,7 @@ export function UniversalSearch() {
   };
 
   const filterDiscussions = (discussions: any[] = []) => {
-    if (!search) return discussions;
+    if (!search.trim()) return [];
     const searchLower = search.toLowerCase();
     return discussions.filter(
       discussion => discussion.title.toLowerCase().includes(searchLower)
@@ -157,6 +157,9 @@ export function UniversalSearch() {
         />
         <CommandList>
           {!hasResults && search && <CommandEmpty>No results found.</CommandEmpty>}
+          {(!search || search.trim() === '') && (
+            <CommandEmpty>Start typing to search...</CommandEmpty>
+          )}
 
           {filteredUsers.length > 0 && (
             <CommandGroup heading="Members">
