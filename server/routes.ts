@@ -846,6 +846,24 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add AI recommendations endpoint
+  app.get("/api/recommendations/posts", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // Import the service
+      const { aiRecommendationService } = await import('./services/ai-recommendation');
+
+      // Get recommendations
+      const recommendations = await aiRecommendationService.getPostRecommendations(req.user.id);
+
+      res.json(recommendations);
+    } catch (error) {
+      console.error("Error getting recommendations:", error);
+      res.status(500).json({ error: "Failed to get recommendations" });
+    }
+  });
+
   // Add this endpoint after the email preferences endpoint
   app.patch("/api/user/theme", async (req, res) => {
     try {
@@ -920,7 +938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             break;
 
-          case 'chat':
+          case ''chat':
             // Handle chat messages
             const chatRecipientWs = clients.get(message.receiverId?.toString());
             if (chatRecipientWs?.readyState === WebSocket.OPEN) {
