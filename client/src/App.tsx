@@ -11,6 +11,7 @@ import SpacesPage from "@/pages/spaces-page";
 import MembersPage from "@/pages/members-page";
 import LeaderboardPage from "@/pages/leaderboard-page";
 import DiscussionsPage from "@/pages/discussions-page";
+import CoursesPage from "@/pages/courses-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
       <ProtectedRoute path="/members" component={MembersPage} />
       <ProtectedRoute path="/leaderboard" component={LeaderboardPage} />
       <ProtectedRoute path="/discussions" component={DiscussionsPage} />
+      <ProtectedRoute path="/courses" component={CoursesPage} />
       <Route component={NotFound} />
     </Switch>
   );
