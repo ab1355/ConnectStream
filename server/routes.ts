@@ -938,7 +938,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             }
             break;
 
-          case ''chat':
+          case 'chat':
             // Handle chat messages
             const chatRecipientWs = clients.get(message.receiverId?.toString());
             if (chatRecipientWs?.readyState === WebSocket.OPEN) {
