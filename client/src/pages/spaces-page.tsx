@@ -4,6 +4,7 @@ import { SpaceGrid } from "@/components/features/spaces/space-grid";
 import { SpaceFilter } from "@/components/features/spaces/space-filter";
 import { CreateSpaceDialog } from "@/components/features/spaces/create-space-dialog";
 import { CreatePollDialog } from "@/components/features/polls/create-poll-dialog";
+import { CreateThreadDialog } from "@/components/features/threads/create-thread-dialog";
 
 export default function SpacesPage() {
   return (
@@ -16,6 +17,7 @@ export default function SpacesPage() {
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold">Spaces</h1>
               <div className="flex gap-2">
+                <CreateThreadDialog />
                 <CreatePollDialog />
                 <CreateSpaceDialog />
               </div>

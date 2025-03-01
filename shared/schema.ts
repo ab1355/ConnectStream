@@ -162,6 +162,45 @@ export const insertHashtagSchema = createInsertSchema(hashtags).pick({
   name: true
 });
 
+// Add thread-related tables
+export const threads = pgTable("threads", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  spaceId: serial("space_id").references(() => spaces.id),
+  authorId: serial("author_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isPinned: boolean("is_pinned").default(false).notNull(),
+  isLocked: boolean("is_locked").default(false).notNull()
+});
+
+export const threadReplies = pgTable("thread_replies", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  threadId: serial("thread_id").references(() => threads.id),
+  authorId: serial("author_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+// Add insert schemas
+export const insertThreadSchema = createInsertSchema(threads).pick({
+  title: true,
+  content: true,
+  spaceId: true
+});
+
+export const insertThreadReplySchema = createInsertSchema(threadReplies).pick({
+  content: true,
+  threadId: true
+});
+
+// Add types
+export type Thread = typeof threads.$inferSelect;
+export type ThreadReply = typeof threadReplies.$inferSelect;
+export type InsertThread = z.infer<typeof insertThreadSchema>;
+export type InsertThreadReply = z.infer<typeof insertThreadReplySchema>;
 
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type InsertSpace = z.infer<typeof insertSpaceSchema>;

@@ -6,12 +6,13 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users } from "@shared/schema"; // Added import for users table
+import { spaces, spaceMembers, users, threads, threadReplies } from "@shared/schema"; // Added import for users table
 import { eq, or, and, sql } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema } from "@shared/schema";
-import { polls, pollOptions, pollResponses } from "@shared/schema";
-import { hashtags, postHashtags, mentions } from "@shared/schema";
+import { polls, pollOptions, pollResponses, hashtags, postHashtags, mentions } from "@shared/schema";
+import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; //Import thread schemas
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -56,14 +57,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         displayName: users.displayName,
         avatarUrl: users.avatarUrl
       })
-      .from(users)
-      .where(
-        or(
-          sql`${users.username} ILIKE ${`%${query}%`}`,
-          sql`${users.displayName} ILIKE ${`%${query}%`}`
+        .from(users)
+        .where(
+          or(
+            sql`${users.username} ILIKE ${`%${query}%`}`,
+            sql`${users.displayName} ILIKE ${`%${query}%`}`
+          )
         )
-      )
-      .limit(5);
+        .limit(5);
 
       res.json(matchingUsers);
     } catch (error) {
@@ -118,7 +119,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             .values({ name, count: 1 })
             .onConflictDoUpdate({
               target: hashtags.name,
-              set: { 
+              set: {
                 count: sql`${hashtags.count} + 1`,
                 lastUsedAt: new Date()
               }
@@ -174,7 +175,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       })
         .from(users)
         .where(
-          eq(users.id, req.user?.id ?? 0) 
+          eq(users.id, req.user?.id ?? 0)
         );
       res.json(usersList);
     } catch (error) {
@@ -364,6 +365,69 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching discussions:", error);
       res.status(500).json({ error: "Failed to fetch discussions" });
+    }
+  });
+
+  // Add these routes in the registerRoutes function
+  app.get("/api/threads", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const allThreads = await db.select().from(threads)
+        .orderBy(threads.createdAt);
+      res.json(allThreads);
+    } catch (error) {
+      console.error("Error fetching threads:", error);
+      res.status(500).json({ error: "Failed to fetch threads" });
+    }
+  });
+
+  app.post("/api/threads", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertThreadSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [thread] = await db.insert(threads)
+        .values({
+          ...validation.data,
+          authorId: req.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      res.status(201).json(thread);
+    } catch (error) {
+      console.error("Error creating thread:", error);
+      res.status(500).json({ error: "Failed to create thread" });
+    }
+  });
+
+  app.post("/api/threads/:threadId/replies", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertThreadReplySchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [reply] = await db.insert(threadReplies)
+        .values({
+          ...validation.data,
+          authorId: req.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date()
+        })
+        .returning();
+
+      res.status(201).json(reply);
+    } catch (error) {
+      console.error("Error creating reply:", error);
+      res.status(500).json({ error: "Failed to create reply" });
     }
   });
 
