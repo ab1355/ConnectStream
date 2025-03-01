@@ -1,95 +1,91 @@
 import { IStorage } from "./storage";
-import createMemoryStore from "memorystore";
+import { db } from "./db";
+import { users, posts, comments, messages } from "@shared/schema";
+import type { User, Post, Comment, Message, InsertUser, InsertMessage } from "@shared/schema";
+import { eq, and, or } from "drizzle-orm";
 import session from "express-session";
-import { User, Post, Comment, Message, InsertUser, InsertMessage } from "@shared/schema";
+import connectPg from "connect-pg-simple";
+import { pool } from "./db";
 
-const MemoryStore = createMemoryStore(session);
+const PostgresSessionStore = connectPg(session);
 
-export class MemStorage implements IStorage {
-  public users: Map<number, User>;
-  private posts: Map<number, Post>;
-  private comments: Map<number, Comment>;
-  private messages: Map<number, Message>;
+export class DatabaseStorage implements IStorage {
   public sessionStore: session.Store;
-  private currentUserId: number;
-  private currentPostId: number;
-  private currentCommentId: number;
-  private currentMessageId: number;
 
   constructor() {
-    this.users = new Map();
-    this.posts = new Map();
-    this.comments = new Map();
-    this.messages = new Map();
-    this.currentUserId = 1;
-    this.currentPostId = 1;
-    this.currentCommentId = 1;
-    this.currentMessageId = 1;
-    this.sessionStore = new MemoryStore({
-      checkPeriod: 86400000
+    this.sessionStore = new PostgresSessionStore({ 
+      pool, 
+      createTableIfMissing: true 
     });
   }
 
   async getUser(id: number): Promise<User | undefined> {
-    return this.users.get(id);
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
   }
 
   async getUserByUsername(username: string): Promise<User | undefined> {
-    return Array.from(this.users.values()).find(
-      (user) => user.username === username
-    );
+    const [user] = await db.select().from(users).where(eq(users.username, username));
+    return user;
   }
 
   async createUser(insertUser: InsertUser): Promise<User> {
-    const id = this.currentUserId++;
-    const user = { 
-      ...insertUser, 
-      id, 
-      role: "user",
-      avatarUrl: null,
-      displayName: insertUser.displayName || null
-    };
-    this.users.set(id, user);
+    const [user] = await db.insert(users).values(insertUser).returning();
     return user;
   }
 
   async getAllPosts(): Promise<Post[]> {
-    return Array.from(this.posts.values());
+    return await db.select().from(posts).orderBy(posts.createdAt);
   }
 
   async createPost(post: Omit<Post, "id" | "createdAt">): Promise<Post> {
-    const id = this.currentPostId++;
-    const newPost = { ...post, id, createdAt: new Date() };
-    this.posts.set(id, newPost);
+    const [newPost] = await db.insert(posts)
+      .values({
+        ...post,
+        createdAt: new Date()
+      })
+      .returning();
     return newPost;
   }
 
   async createComment(comment: Omit<Comment, "id" | "createdAt">): Promise<Comment> {
-    const id = this.currentCommentId++;
-    const newComment = { ...comment, id, createdAt: new Date() };
-    this.comments.set(id, newComment);
+    const [newComment] = await db.insert(comments)
+      .values({
+        ...comment,
+        createdAt: new Date()
+      })
+      .returning();
     return newComment;
   }
 
   async getMessages(userId: number): Promise<Message[]> {
-    return Array.from(this.messages.values()).filter(
-      (message) => message.senderId === userId || message.receiverId === userId
-    );
+    return await db.select()
+      .from(messages)
+      .where(
+        or(
+          eq(messages.senderId, userId),
+          eq(messages.receiverId, userId)
+        )
+      )
+      .orderBy(messages.createdAt);
   }
 
   async createMessage(message: Omit<Message, "id" | "createdAt" | "read">): Promise<Message> {
-    const id = this.currentMessageId++;
-    const newMessage = { ...message, id, createdAt: new Date(), read: false };
-    this.messages.set(id, newMessage);
+    const [newMessage] = await db.insert(messages)
+      .values({
+        ...message,
+        createdAt: new Date(),
+        read: false
+      })
+      .returning();
     return newMessage;
   }
 
   async markMessageAsRead(messageId: number): Promise<void> {
-    const message = this.messages.get(messageId);
-    if (message) {
-      this.messages.set(messageId, { ...message, read: true });
-    }
+    await db.update(messages)
+      .set({ read: true })
+      .where(eq(messages.id, messageId));
   }
 }
 
-export const storage = new MemStorage();
+export const storage = new DatabaseStorage();
