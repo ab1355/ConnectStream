@@ -1,15 +1,37 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Users, Lock, Eye, EyeOff } from "lucide-react";
 
 interface SpaceCardProps {
   name: string;
   description: string;
   memberCount: number;
+  privacy: "public" | "private" | "secret";
   imageUrl: string;
 }
 
-export function SpaceCard({ name, description, memberCount, imageUrl }: SpaceCardProps) {
+export function SpaceCard({ name, description, memberCount, privacy, imageUrl }: SpaceCardProps) {
+  const privacyConfig = {
+    public: {
+      icon: Eye,
+      label: "Public",
+      variant: "secondary" as const,
+    },
+    private: {
+      icon: Lock,
+      label: "Private",
+      variant: "outline" as const,
+    },
+    secret: {
+      icon: EyeOff,
+      label: "Secret",
+      variant: "destructive" as const,
+    },
+  };
+
+  const { icon: PrivacyIcon, label, variant } = privacyConfig[privacy];
+
   return (
     <Card className="overflow-hidden">
       <div className="aspect-video relative">
@@ -18,6 +40,13 @@ export function SpaceCard({ name, description, memberCount, imageUrl }: SpaceCar
           alt={name}
           className="object-cover w-full h-full"
         />
+        <Badge
+          variant={variant}
+          className="absolute top-2 right-2 flex items-center gap-1"
+        >
+          <PrivacyIcon className="h-3 w-3" />
+          {label}
+        </Badge>
       </div>
       <CardHeader>
         <h3 className="font-semibold text-lg">{name}</h3>
