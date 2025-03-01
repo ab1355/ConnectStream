@@ -6,7 +6,7 @@ import { User, Post, Comment, Message, InsertUser, InsertMessage } from "@shared
 const MemoryStore = createMemoryStore(session);
 
 export class MemStorage implements IStorage {
-  private users: Map<number, User>;
+  public users: Map<number, User>;
   private posts: Map<number, Post>;
   private comments: Map<number, Comment>;
   private messages: Map<number, Message>;
@@ -46,7 +46,8 @@ export class MemStorage implements IStorage {
       ...insertUser, 
       id, 
       role: "user",
-      avatarUrl: null 
+      avatarUrl: null,
+      displayName: insertUser.displayName || null
     };
     this.users.set(id, user);
     return user;
