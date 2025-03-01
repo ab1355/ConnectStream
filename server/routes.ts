@@ -9,6 +9,8 @@ import { db } from "./db";
 import { spaces, spaceMembers, users } from "@shared/schema"; // Added import for users table
 import { eq, or, and } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
+import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema } from "@shared/schema";
+import { polls, pollOptions, pollResponses } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -75,10 +77,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         role: users.role,
         avatarUrl: users.avatarUrl
       })
-      .from(users)
-      .where(
-        eq(users.id, req.user?.id ?? 0) //This line was causing the error.  Changed to select only the current user.
-      );
+        .from(users)
+        .where(
+          eq(users.id, req.user?.id ?? 0) //This line was causing the error.  Changed to select only the current user.
+        );
       res.json(usersList);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -169,13 +171,86 @@ export async function registerRoutes(app: Express): Promise<Server> {
           joinedAt: new Date()
         });
 
-      res.status(201).json(space);
+      res.json(space);
     } catch (error) {
       console.error("Error creating space:", error);
       res.status(500).json({ error: "Failed to create space" });
     }
   });
 
+
+  // Polls routes
+  app.get("/api/polls", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      const allPolls = await db.select().from(polls)
+        .orderBy(polls.createdAt);
+      res.json(allPolls);
+    } catch (error) {
+      console.error("Error fetching polls:", error);
+      res.status(500).json({ error: "Failed to fetch polls" });
+    }
+  });
+
+  app.post("/api/polls", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertPollSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [poll] = await db.insert(polls)
+        .values({
+          ...validation.data,
+          creatorId: req.user.id,
+          createdAt: new Date()
+        })
+        .returning();
+
+      // Insert poll options if provided
+      if (req.body.options && Array.isArray(req.body.options)) {
+        const options = req.body.options.map((text: string, index: number) => ({
+          pollId: poll.id,
+          text,
+          order: index
+        }));
+
+        await db.insert(pollOptions)
+          .values(options);
+      }
+
+      res.status(201).json(poll);
+    } catch (error) {
+      console.error("Error creating poll:", error);
+      res.status(500).json({ error: "Failed to create poll" });
+    }
+  });
+
+  app.post("/api/polls/:pollId/respond", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertPollResponseSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [response] = await db.insert(pollResponses)
+        .values({
+          ...validation.data,
+          userId: req.user.id,
+          createdAt: new Date()
+        })
+        .returning();
+
+      res.status(201).json(response);
+    } catch (error) {
+      console.error("Error submitting poll response:", error);
+      res.status(500).json({ error: "Failed to submit poll response" });
+    }
+  });
 
   app.get("/api/courses", async (req, res) => {
     try {
@@ -200,8 +275,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
-  const wss = new WebSocketServer({ 
-    server: httpServer, 
+  const wss = new WebSocketServer({
+    server: httpServer,
     path: '/ws'
   });
 
@@ -212,7 +287,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     if (!req.url) return;
 
     const userId = new URL(
-      req.url, 
+      req.url,
       `${req.headers.origin || 'http://localhost'}`
     ).searchParams.get('userId');
 
