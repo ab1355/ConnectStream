@@ -200,6 +200,16 @@ export const bookmarks = pgTable("bookmarks", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const mediaFiles = pgTable("media_files", {
+  id: serial("id").primaryKey(),
+  filename: text("filename").notNull(),
+  path: text("path").notNull(),
+  mimeType: text("mime_type").notNull(),
+  size: integer("size").notNull(),
+  uploaderId: serial("uploader_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -311,6 +321,13 @@ export const insertBookmarkSchema = createInsertSchema(bookmarks).pick({
   postId: true,
 });
 
+export const insertMediaFileSchema = createInsertSchema(mediaFiles).pick({
+  filename: true,
+  path: true,
+  mimeType: true,
+  size: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -355,6 +372,9 @@ export type InsertCustomLink = z.infer<typeof insertCustomLinkSchema>;
 
 export type Bookmark = typeof bookmarks.$inferSelect;
 export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
+
+export type MediaFile = typeof mediaFiles.$inferSelect;
+export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
 
 export type BadgeDisplay = {
   name: string;

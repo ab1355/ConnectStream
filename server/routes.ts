@@ -20,6 +20,10 @@ import { customLinks } from "@shared/schema";
 import { insertCustomLinkSchema } from "@shared/schema"; // Import the new schema
 import { posts } from "@shared/schema"; // Add missing import at the top with other imports
 import { z } from "zod"; // Added import for zod
+import multer from 'multer';
+import { mediaStorageService } from './services/media-storage';
+import { mediaFiles } from '@shared/schema';
+import path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -629,18 +633,42 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Media upload route
-  app.post("/api/upload", async (req, res) => {
+  const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    }
+  });
+
+  app.post("/api/upload", upload.single('file'), async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (!req.file) return res.status(400).json({ error: "No file uploaded" });
 
-      // TODO: Implement file upload with proper storage
-      // For now, return a mock response
-      res.json({
-        url: "https://picsum.photos/seed/upload/800/400"
+      const mediaFile = await mediaStorageService.saveFile(req.file, req.user.id);
+
+      res.status(201).json({
+        id: mediaFile.id,
+        filename: mediaFile.filename,
+        url: `/uploads/${path.basename(mediaFile.path)}`,
+        mimeType: mediaFile.mimeType,
+        size: mediaFile.size
       });
     } catch (error) {
       console.error("Error uploading file:", error);
       res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
+  app.get("/uploads/:filename", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const filePath = path.join(process.cwd(), 'uploads', req.params.filename);
+      res.sendFile(filePath);
+    } catch (error) {
+      console.error("Error serving file:", error);
+      res.status(500).json({ error: "Failed to serve file" });
     }
   });
 
