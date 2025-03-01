@@ -6,10 +6,10 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies } from "@shared/schema"; // Added import for users table
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks } from "@shared/schema"; // Added import for users table and bookmarks table
 import { eq, or, and, sql } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
-import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema } from "@shared/schema";
+import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema } from "@shared/schema";
 import { polls, pollOptions, pollResponses, hashtags, postHashtags, mentions } from "@shared/schema";
 import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; //Import thread schemas
 import { userScores, achievements, userAchievements } from "@shared/schema";
@@ -486,6 +486,78 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating reply:", error);
       res.status(500).json({ error: "Failed to create reply" });
+    }
+  });
+
+  //Bookmark routes
+  app.get("/api/bookmarks", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const userBookmarks = await db.select({
+        id: bookmarks.id,
+        createdAt: bookmarks.createdAt,
+        post: {
+          id: posts.id,
+          title: posts.title,
+          content: posts.content,
+          createdAt: posts.createdAt,
+          authorId: posts.authorId,
+        }
+      })
+      .from(bookmarks)
+      .innerJoin(posts, eq(posts.id, bookmarks.postId))
+      .where(eq(bookmarks.userId, req.user.id))
+      .orderBy(desc(bookmarks.createdAt));
+
+      res.json(userBookmarks);
+    } catch (error) {
+      console.error("Error fetching bookmarks:", error);
+      res.status(500).json({ error: "Failed to fetch bookmarks" });
+    }
+  });
+
+  app.post("/api/bookmarks", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertBookmarkSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [bookmark] = await db.insert(bookmarks)
+        .values({
+          ...validation.data,
+          userId: req.user.id,
+        })
+        .returning();
+
+      res.status(201).json(bookmark);
+    } catch (error) {
+      console.error("Error creating bookmark:", error);
+      res.status(500).json({ error: "Failed to create bookmark" });
+    }
+  });
+
+  app.delete("/api/bookmarks/:postId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const postId = parseInt(req.params.postId);
+
+      await db.delete(bookmarks)
+        .where(
+          and(
+            eq(bookmarks.userId, req.user.id),
+            eq(bookmarks.postId, postId)
+          )
+        );
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error removing bookmark:", error);
+      res.status(500).json({ error: "Failed to remove bookmark" });
     }
   });
 

@@ -178,9 +178,18 @@ export const customLinks = pgTable("custom_links", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   url: text("url").notNull(),
+  slug: text("slug").unique(), // Add unique slug field
   icon: text("icon").notNull(), // Lucide icon name
-  category: text("category").notNull(), // 'social', 'financial', 'other'
+  category: text("category").notNull(), // 'social', 'financial', 'other', 'slug'
   order: integer("order").default(0).notNull(),
+  userId: serial("user_id").references(() => users.id), // Add user reference
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const bookmarks = pgTable("bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  postId: serial("post_id").references(() => posts.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -279,9 +288,14 @@ export const insertNotificationSchema = createInsertSchema(notifications).pick({
 export const insertCustomLinkSchema = createInsertSchema(customLinks).pick({
   title: true,
   url: true,
+  slug: true,
   icon: true,
   category: true,
   order: true,
+});
+
+export const insertBookmarkSchema = createInsertSchema(bookmarks).pick({
+  postId: true,
 });
 
 export type Thread = typeof threads.$inferSelect;
@@ -325,3 +339,6 @@ export type InsertNotification = z.infer<typeof insertNotificationSchema>;
 
 export type CustomLink = typeof customLinks.$inferSelect;
 export type InsertCustomLink = z.infer<typeof insertCustomLinkSchema>;
+
+export type Bookmark = typeof bookmarks.$inferSelect;
+export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
