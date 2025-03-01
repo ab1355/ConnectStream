@@ -1,4 +1,3 @@
-import { useAuth } from "@/hooks/use-auth";
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { CreatePost } from "@/components/features/feed/create-post";
@@ -6,8 +5,6 @@ import { PostList } from "@/components/features/feed/post-list";
 import { ContentFilter } from "@/components/features/feed/content-filter";
 
 export default function FeedPage() {
-  const { user } = useAuth();
-
   return (
     <div className="min-h-screen bg-background">
       <Header />

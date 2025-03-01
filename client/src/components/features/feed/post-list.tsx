@@ -4,7 +4,7 @@ import { PostCard } from "./post-card";
 import { Loader2 } from "lucide-react";
 
 export function PostList() {
-  const { data: posts, isLoading } = useQuery<Post[]>({
+  const { data: posts, isLoading, error } = useQuery<Post[]>({
     queryKey: ["/api/posts"],
   });
 
@@ -12,6 +12,14 @@ export function PostList() {
     return (
       <div className="flex justify-center p-8">
         <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center text-destructive p-8">
+        Error loading posts. Please try again.
       </div>
     );
   }
