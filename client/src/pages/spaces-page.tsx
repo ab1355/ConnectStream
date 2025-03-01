@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { SpaceGrid } from "@/components/features/spaces/space-grid";
 import { SpaceFilter } from "@/components/features/spaces/space-filter";
 import { CreateSpaceDialog } from "@/components/features/spaces/create-space-dialog";
+import { CreatePollDialog } from "@/components/features/polls/create-poll-dialog";
 
 export default function SpacesPage() {
   return (
@@ -14,7 +15,10 @@ export default function SpacesPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex justify-between items-center mb-6">
               <h1 className="text-2xl font-bold">Spaces</h1>
-              <CreateSpaceDialog />
+              <div className="flex gap-2">
+                <CreatePollDialog />
+                <CreateSpaceDialog />
+              </div>
             </div>
             <SpaceFilter />
             <SpaceGrid />
