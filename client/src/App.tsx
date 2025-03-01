@@ -13,6 +13,7 @@ import LeaderboardPage from "@/pages/leaderboard-page";
 import DiscussionsPage from "@/pages/discussions-page";
 import CoursesPage from "@/pages/courses-page";
 import MessagesPage from "@/pages/messages-page";
+import UserApprovalsPage from "@/pages/admin/user-approvals";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <ProtectedRoute path="/discussions" component={DiscussionsPage} />
       <ProtectedRoute path="/courses" component={CoursesPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
+      <ProtectedRoute path="/admin/user-approvals" component={UserApprovalsPage} />
       <Route component={NotFound} />
     </Switch>
   );

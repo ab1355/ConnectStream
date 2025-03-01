@@ -29,5 +29,14 @@ export function ProtectedRoute({
     );
   }
 
-  return <Component />
+  // Check for admin routes
+  if (path.startsWith("/admin") && user.role !== "admin" && user.role !== "moderator") {
+    return (
+      <Route path={path}>
+        <Redirect to="/" />
+      </Route>
+    );
+  }
+
+  return <Route path={path} component={Component} />;
 }

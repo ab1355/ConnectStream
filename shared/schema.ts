@@ -7,8 +7,22 @@ export const users = pgTable("users", {
   username: text("username").notNull().unique(),
   password: text("password").notNull(),
   displayName: text("display_name"),
-  role: text("role").default("user").notNull(),
-  avatarUrl: text("avatar_url")
+  role: text("role").default("user").notNull(), // 'user', 'moderator', 'admin'
+  status: text("status").default("pending").notNull(), // 'pending', 'approved', 'blocked'
+  avatarUrl: text("avatar_url"),
+  approvedAt: timestamp("approved_at"),
+  approvedBy: serial("approved_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userApprovalNotifications = pgTable("user_approval_notifications", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  status: text("status").notNull(), // 'pending', 'approved', 'rejected'
+  message: text("message"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  processedAt: timestamp("processed_at"),
+  processedBy: serial("processed_by").references(() => users.id),
 });
 
 export const spaces = pgTable("spaces", {
@@ -173,7 +187,9 @@ export const customLinks = pgTable("custom_links", {
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
-  displayName: true
+  displayName: true,
+  status: true,
+  role: true,
 });
 
 export const insertSpaceSchema = createInsertSchema(spaces).pick({

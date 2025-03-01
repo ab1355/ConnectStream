@@ -606,6 +606,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add these routes to handle user approvals
+  app.get("/api/users/pending", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // Check if user has admin/moderator privileges
+      if (!["admin", "moderator"].includes(req.user.role)) {
+        return res.sendStatus(403);
+      }
+
+      const pendingUsers = await db.select({
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        status: users.status,
+        createdAt: users.createdAt,
+      })
+        .from(users)
+        .where(eq(users.status, "pending"))
+        .orderBy(desc(users.createdAt));
+
+      res.json(pendingUsers);
+    } catch (error) {
+      console.error("Error fetching pending users:", error);
+      res.status(500).json({ error: "Failed to fetch pending users" });
+    }
+  });
+
+  app.post("/api/users/:userId/approve", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // Check if user has admin/moderator privileges
+      if (!["admin", "moderator"].includes(req.user.role)) {
+        return res.sendStatus(403);
+      }
+
+      const userId = parseInt(req.params.userId);
+
+      // Update user status
+      const [updatedUser] = await db.update(users)
+        .set({
+          status: "approved",
+          approvedAt: new Date(),
+          approvedBy: req.user.id,
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      // Create notification
+      await db.insert(notifications)
+        .values({
+          userId: userId,
+          title: "Account Approved",
+          content: "Your account has been approved. Welcome to the community!",
+          type: "account_approval",
+          link: "/",
+        });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error approving user:", error);
+      res.status(500).json({ error: "Failed to approve user" });
+    }
+  });
+
+  app.post("/api/users/:userId/block", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // Check if user has admin privileges
+      if (req.user.role !== "admin") {
+        return res.sendStatus(403);
+      }
+
+      const userId = parseInt(req.params.userId);
+
+      // Update user status
+      const [updatedUser] = await db.update(users)
+        .set({
+          status: "blocked",
+        })
+        .where(eq(users.id, userId))
+        .returning();
+
+      // Create notification
+      await db.insert(notifications)
+        .values({
+          userId: userId,
+          title: "Account Blocked",
+          content: "Your account has been blocked. Please contact support for more information.",
+          type: "account_blocked",
+        });
+
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error blocking user:", error);
+      res.status(500).json({ error: "Failed to block user" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
