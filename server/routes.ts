@@ -138,25 +138,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
-  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws'
+  });
 
+  // Keep track of connected clients
   const clients = new Map<string, WebSocket>();
 
   wss.on('connection', (ws, req) => {
     if (!req.url) return;
-    const userId = req.url.split('=')[1];
+
+    const userId = new URL(
+      req.url, 
+      `${req.headers.origin || 'http://localhost'}`
+    ).searchParams.get('userId');
+
     if (!userId) return;
 
     clients.set(userId, ws);
 
-    ws.on('message', (data) => {
+    ws.on('message', async (data) => {
       try {
         const message = JSON.parse(data.toString());
-        clients.forEach((client, id) => {
-          if (id !== userId && client.readyState === WebSocket.OPEN) {
-            client.send(JSON.stringify(message));
-          }
-        });
+        // Broadcast to the intended recipient
+        const recipientWs = clients.get(message.receiverId?.toString());
+        if (recipientWs?.readyState === WebSocket.OPEN) {
+          recipientWs.send(JSON.stringify(message));
+        }
       } catch (error) {
         console.error('WebSocket message error:', error);
       }

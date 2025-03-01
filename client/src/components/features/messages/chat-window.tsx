@@ -35,21 +35,35 @@ export function ChatWindow({ selectedUser }: ChatWindowProps) {
   useEffect(() => {
     // Connect to WebSocket
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-    const wsUrl = `${protocol}//${window.location.host}/ws?userId=${user?.id}`;
+    const host = window.location.host;
+    const wsUrl = `${protocol}//${host}/ws?userId=${user?.id}`;
+
+    if (!user?.id) return;
+
     const ws = new WebSocket(wsUrl);
+
+    ws.onopen = () => {
+      console.log('WebSocket connected');
+    };
 
     ws.onmessage = (event) => {
       const message = JSON.parse(event.data);
       // Update messages in the UI
-      queryClient.invalidateQueries({ queryKey: ["/api/messages"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/messages", selectedUser.id] });
+    };
+
+    ws.onerror = (error) => {
+      console.error('WebSocket error:', error);
     };
 
     setSocket(ws);
 
     return () => {
-      ws.close();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close();
+      }
     };
-  }, [user?.id]);
+  }, [user?.id, selectedUser.id]);
 
   const sendMessage = useMutation({
     mutationFn: async (data: { content: string; receiverId: number }) => {
