@@ -15,8 +15,9 @@ export default function FeedPage() {
         <Sidebar />
         <main className="flex-1 p-6">
           <div className="max-w-3xl mx-auto space-y-6">
-            <ContentFilter />
+            <h1 className="text-2xl font-bold">Feed</h1>
             <CreatePost />
+            <ContentFilter />
             <PostList />
           </div>
         </main>
