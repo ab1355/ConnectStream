@@ -14,7 +14,8 @@ import { polls, pollOptions, pollResponses, hashtags, postHashtags, mentions } f
 import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; //Import thread schemas
 import { userScores, achievements, userAchievements } from "@shared/schema";
 import { desc } from "drizzle-orm";
-
+import { notifications } from "@shared/schema";
+import { insertNotificationSchema } from "@shared/schema";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -486,6 +487,45 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Notification routes
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const userNotifications = await db.select()
+        .from(notifications)
+        .where(eq(notifications.userId, req.user.id))
+        .orderBy(desc(notifications.createdAt))
+        .limit(50);
+
+      res.json(userNotifications);
+    } catch (error) {
+      console.error("Error fetching notifications:", error);
+      res.status(500).json({ error: "Failed to fetch notifications" });
+    }
+  });
+
+  app.post("/api/notifications/mark-read", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      await db.update(notifications)
+        .set({ isRead: true })
+        .where(
+          and(
+            eq(notifications.userId, req.user.id),
+            eq(notifications.isRead, false)
+          )
+        );
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
+      res.status(500).json({ error: "Failed to mark notifications as read" });
+    }
+  });
+
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
@@ -512,10 +552,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     ws.on('message', async (data) => {
       try {
         const message = JSON.parse(data.toString());
-        // Broadcast to the intended recipient
-        const recipientWs = clients.get(message.receiverId?.toString());
-        if (recipientWs?.readyState === WebSocket.OPEN) {
-          recipientWs.send(JSON.stringify(message));
+
+        // Handle different message types
+        switch (message.type) {
+          case 'notification':
+            // Send notification to specific user
+            const recipientWs = clients.get(message.userId?.toString());
+            if (recipientWs?.readyState === WebSocket.OPEN) {
+              recipientWs.send(JSON.stringify({
+                type: 'notification',
+                data: message.data
+              }));
+            }
+            break;
+
+          case 'chat':
+            // Handle chat messages
+            const chatRecipientWs = clients.get(message.receiverId?.toString());
+            if (chatRecipientWs?.readyState === WebSocket.OPEN) {
+              chatRecipientWs.send(JSON.stringify(message));
+            }
+            break;
         }
       } catch (error) {
         console.error('WebSocket message error:', error);

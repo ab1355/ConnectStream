@@ -149,6 +149,17 @@ export const userAchievements = pgTable("user_achievements", {
   earnedAt: timestamp("earned_at").defaultNow().notNull(),
 });
 
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  type: text("type").notNull(), // 'mention', 'reply', 'achievement', etc.
+  isRead: boolean("is_read").default(false).notNull(),
+  link: text("link"), // URL to the relevant content
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -231,6 +242,14 @@ export const insertAchievementSchema = createInsertSchema(achievements).pick({
   icon: true,
 });
 
+export const insertNotificationSchema = createInsertSchema(notifications).pick({
+  userId: true,
+  title: true,
+  content: true,
+  type: true,
+  link: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -266,3 +285,6 @@ export type UserAchievement = typeof userAchievements.$inferSelect;
 
 export type InsertUserScore = z.infer<typeof insertUserScoreSchema>;
 export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
+
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = z.infer<typeof insertNotificationSchema>;
