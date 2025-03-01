@@ -12,6 +12,8 @@ import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema } from "@shared/schema";
 import { polls, pollOptions, pollResponses, hashtags, postHashtags, mentions } from "@shared/schema";
 import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; //Import thread schemas
+import { userScores, achievements, userAchievements } from "@shared/schema";
+import { desc } from "drizzle-orm";
 
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -365,6 +367,59 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching discussions:", error);
       res.status(500).json({ error: "Failed to fetch discussions" });
+    }
+  });
+
+  // Leaderboard routes
+  app.get("/api/leaderboard", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const topUsers = await db.select({
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl,
+        points: userScores.points,
+        level: userScores.level,
+      })
+        .from(users)
+        .leftJoin(userScores, eq(users.id, userScores.userId))
+        .orderBy(desc(userScores.points))
+        .limit(10);
+
+      res.json(topUsers);
+    } catch (error) {
+      console.error("Error fetching leaderboard:", error);
+      res.status(500).json({ error: "Failed to fetch leaderboard" });
+    }
+  });
+
+  app.get("/api/users/:userId/achievements", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const userAchievs = await db.select({
+        id: achievements.id,
+        name: achievements.name,
+        description: achievements.description,
+        points: achievements.points,
+        icon: achievements.icon,
+        earnedAt: userAchievements.earnedAt,
+      })
+        .from(achievements)
+        .innerJoin(
+          userAchievements,
+          and(
+            eq(achievements.id, userAchievements.achievementId),
+            eq(userAchievements.userId, parseInt(req.params.userId))
+          )
+        );
+
+      res.json(userAchievs);
+    } catch (error) {
+      console.error("Error fetching user achievements:", error);
+      res.status(500).json({ error: "Failed to fetch user achievements" });
     }
   });
 

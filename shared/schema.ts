@@ -104,6 +104,51 @@ export const mentions = pgTable("mentions", {
   createdAt: timestamp("created_at").defaultNow().notNull()
 });
 
+export const threads = pgTable("threads", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  spaceId: serial("space_id").references(() => spaces.id),
+  authorId: serial("author_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isPinned: boolean("is_pinned").default(false).notNull(),
+  isLocked: boolean("is_locked").default(false).notNull()
+});
+
+export const threadReplies = pgTable("thread_replies", {
+  id: serial("id").primaryKey(),
+  content: text("content").notNull(),
+  threadId: serial("thread_id").references(() => threads.id),
+  authorId: serial("author_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull()
+});
+
+export const userScores = pgTable("user_scores", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  points: integer("points").default(0).notNull(),
+  level: integer("level").default(1).notNull(),
+  lastUpdated: timestamp("last_updated").defaultNow().notNull(),
+});
+
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  description: text("description").notNull(),
+  points: integer("points").notNull(),
+  icon: text("icon").notNull(), // Lucide icon name
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  achievementId: serial("achievement_id").references(() => achievements.id),
+  earnedAt: timestamp("earned_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -162,29 +207,6 @@ export const insertHashtagSchema = createInsertSchema(hashtags).pick({
   name: true
 });
 
-// Add thread-related tables
-export const threads = pgTable("threads", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  content: text("content").notNull(),
-  spaceId: serial("space_id").references(() => spaces.id),
-  authorId: serial("author_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull(),
-  isPinned: boolean("is_pinned").default(false).notNull(),
-  isLocked: boolean("is_locked").default(false).notNull()
-});
-
-export const threadReplies = pgTable("thread_replies", {
-  id: serial("id").primaryKey(),
-  content: text("content").notNull(),
-  threadId: serial("thread_id").references(() => threads.id),
-  authorId: serial("author_id").references(() => users.id),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-  updatedAt: timestamp("updated_at").defaultNow().notNull()
-});
-
-// Add insert schemas
 export const insertThreadSchema = createInsertSchema(threads).pick({
   title: true,
   content: true,
@@ -196,7 +218,19 @@ export const insertThreadReplySchema = createInsertSchema(threadReplies).pick({
   threadId: true
 });
 
-// Add types
+export const insertUserScoreSchema = createInsertSchema(userScores).pick({
+  userId: true,
+  points: true,
+  level: true,
+});
+
+export const insertAchievementSchema = createInsertSchema(achievements).pick({
+  name: true,
+  description: true,
+  points: true,
+  icon: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -225,3 +259,10 @@ export type PollResponse = typeof pollResponses.$inferSelect;
 export type Hashtag = typeof hashtags.$inferSelect;
 export type PostHashtag = typeof postHashtags.$inferSelect;
 export type Mention = typeof mentions.$inferSelect;
+
+export type UserScore = typeof userScores.$inferSelect;
+export type Achievement = typeof achievements.$inferSelect;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+
+export type InsertUserScore = z.infer<typeof insertUserScoreSchema>;
+export type InsertAchievement = z.infer<typeof insertAchievementSchema>;
