@@ -8,6 +8,7 @@ import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import FeedPage from "@/pages/feed-page";
 import SpacesPage from "@/pages/spaces-page";
+import MembersPage from "@/pages/members-page";
 import { ProtectedRoute } from "./lib/protected-route";
 
 function Router() {
@@ -17,6 +18,7 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/feed" component={FeedPage} />
       <ProtectedRoute path="/spaces" component={SpacesPage} />
+      <ProtectedRoute path="/members" component={MembersPage} />
       <Route component={NotFound} />
     </Switch>
   );
