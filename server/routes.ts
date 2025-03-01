@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers } from "@shared/schema";
+import { spaces, spaceMembers, users } from "@shared/schema"; // Added import for users table
 import { eq, or, and } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 
@@ -68,10 +68,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/users", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
-      const users = Array.from(storage.users.values())
-        .filter(u => u.id !== req.user?.id)
-        .map(({ password, ...user }) => user);
-      res.json(users);
+      const usersList = await db.select({
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        role: users.role,
+        avatarUrl: users.avatarUrl
+      })
+      .from(users)
+      .where(
+        eq(users.id, req.user?.id ?? 0) //This line was causing the error.  Changed to select only the current user.
+      );
+      res.json(usersList);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ error: "Failed to fetch users" });
