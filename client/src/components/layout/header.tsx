@@ -4,6 +4,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { LogOut } from "lucide-react";
 import { UniversalSearch } from "@/components/features/search/universal-search";
 import { NotificationDropdown } from "@/components/features/notifications/notification-dropdown";
+import { ThemeSwitcher } from "@/components/ui/theme-switcher";
 
 export function Header() {
   const { user, logoutMutation } = useAuth();
@@ -17,6 +18,7 @@ export function Header() {
       </div>
 
       <div className="flex items-center space-x-4">
+        <ThemeSwitcher />
         <NotificationDropdown />
 
         <div className="flex items-center space-x-2">
