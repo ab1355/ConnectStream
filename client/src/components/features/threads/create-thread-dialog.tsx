@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { insertThreadSchema } from "@shared/schema";
+import { insertThreadSchema, type InsertThread } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { MentionsInput } from "@/components/ui/mentions-input";
@@ -30,7 +30,7 @@ export function CreateThreadDialog() {
   const [open, setOpen] = useState(false);
   const { toast } = useToast();
 
-  const form = useForm({
+  const form = useForm<InsertThread>({
     resolver: zodResolver(insertThreadSchema),
     defaultValues: {
       title: "",
@@ -40,7 +40,7 @@ export function CreateThreadDialog() {
   });
 
   const createThreadMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: InsertThread) => {
       const res = await apiRequest("POST", "/api/threads", data);
       return res.json();
     },
@@ -100,7 +100,7 @@ export function CreateThreadDialog() {
                       value={field.value}
                       onChange={field.onChange}
                       placeholder="Write your thread content here..."
-                      className="min-h-[200px]"
+                      className="min-h-[200px] w-full resize-none rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     />
                   </FormControl>
                   <FormMessage />
