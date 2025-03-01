@@ -1,5 +1,6 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
@@ -12,7 +13,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
       const posts = await storage.getAllPosts();
-      // Sort posts by creation date, newest first
       posts.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
       res.json(posts);
     } catch (error) {
@@ -60,5 +60,37 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
+
+  // WebSocket Server Setup
+  const wss = new WebSocketServer({ server: httpServer, path: '/ws' });
+
+  const clients = new Map<string, WebSocket>();
+
+  wss.on('connection', (ws, req) => {
+    if (!req.url) return;
+    const userId = req.url.split('=')[1];
+    if (!userId) return;
+
+    clients.set(userId, ws);
+
+    ws.on('message', (data) => {
+      try {
+        const message = JSON.parse(data.toString());
+        // Broadcast to all connected clients except sender
+        clients.forEach((client, id) => {
+          if (id !== userId && client.readyState === WebSocket.OPEN) {
+            client.send(JSON.stringify(message));
+          }
+        });
+      } catch (error) {
+        console.error('WebSocket message error:', error);
+      }
+    });
+
+    ws.on('close', () => {
+      clients.delete(userId);
+    });
+  });
+
   return httpServer;
 }

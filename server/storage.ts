@@ -1,7 +1,7 @@
 import { IStorage } from "./storage";
 import createMemoryStore from "memorystore";
 import session from "express-session";
-import { User, Post, Comment, InsertUser } from "@shared/schema";
+import { User, Post, Comment, Message, InsertUser, InsertMessage } from "@shared/schema";
 
 const MemoryStore = createMemoryStore(session);
 
@@ -9,18 +9,22 @@ export class MemStorage implements IStorage {
   private users: Map<number, User>;
   private posts: Map<number, Post>;
   private comments: Map<number, Comment>;
+  private messages: Map<number, Message>;
   public sessionStore: session.Store;
   private currentUserId: number;
   private currentPostId: number;
   private currentCommentId: number;
+  private currentMessageId: number;
 
   constructor() {
     this.users = new Map();
     this.posts = new Map();
     this.comments = new Map();
+    this.messages = new Map();
     this.currentUserId = 1;
     this.currentPostId = 1;
     this.currentCommentId = 1;
+    this.currentMessageId = 1;
     this.sessionStore = new MemoryStore({
       checkPeriod: 86400000
     });
@@ -64,6 +68,26 @@ export class MemStorage implements IStorage {
     const newComment = { ...comment, id, createdAt: new Date() };
     this.comments.set(id, newComment);
     return newComment;
+  }
+
+  async getMessages(userId: number): Promise<Message[]> {
+    return Array.from(this.messages.values()).filter(
+      (message) => message.senderId === userId || message.receiverId === userId
+    );
+  }
+
+  async createMessage(message: Omit<Message, "id" | "createdAt" | "read">): Promise<Message> {
+    const id = this.currentMessageId++;
+    const newMessage = { ...message, id, createdAt: new Date(), read: false };
+    this.messages.set(id, newMessage);
+    return newMessage;
+  }
+
+  async markMessageAsRead(messageId: number): Promise<void> {
+    const message = this.messages.get(messageId);
+    if (message) {
+      this.messages.set(messageId, { ...message, read: true });
+    }
   }
 }
 

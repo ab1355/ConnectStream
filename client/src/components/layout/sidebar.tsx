@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Home, Users, MessageSquare, Trophy, BookOpen, Layout } from "lucide-react";
+import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle } from "lucide-react";
 
 const navItems = [
   { icon: Home, label: "Feed", href: "/" },
@@ -10,6 +10,7 @@ const navItems = [
   { icon: MessageSquare, label: "Discussions", href: "/discussions" },
   { icon: Trophy, label: "Leaderboard", href: "/leaderboard" },
   { icon: BookOpen, label: "Courses", href: "/courses" },
+  { icon: MessageCircle, label: "Messages", href: "/messages" },
 ];
 
 export function Sidebar() {
