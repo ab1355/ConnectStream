@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons } from "@shared/schema"; // Added import for users table and bookmarks table
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments } from "@shared/schema"; // Added import for users table and bookmarks table
 import { eq, or, and, sql, desc } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
@@ -1103,6 +1103,109 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error pinning discussion:", error);
       res.status(500).json({ error: "Failed to pin discussion" });
+    }
+  });
+
+  // Add progress tracking endpoints
+  app.get("/api/courses/:courseId/progress", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const courseId = parseInt(req.params.courseId);
+
+      // Get total lessons in course
+      const totalLessons = await db.select({ count: sql<number>`count(*)` })
+        .from(lessons)
+        .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
+        .where(eq(courseSections.courseId, courseId));
+
+      // Get completed lessons
+      const completedLessons = await db.select({ count: sql<number>`count(*)` })
+        .from(lessonProgress)
+        .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+        .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
+        .where(
+          and(
+            eq(courseSections.courseId, courseId),
+            eq(lessonProgress.userId, req.user.id),
+            eq(lessonProgress.completed, true)
+          )
+        );
+
+      const progress = {
+        completedLessons: completedLessons[0].count,
+        totalLessons: totalLessons[0].count,
+        percentageComplete: Math.round((completedLessons[0].count / totalLessons[0].count) * 100)
+      };
+
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching course progress:", error);
+      res.status(500).json({ error: "Failed to fetch course progress" });
+    }
+  });
+
+  app.get("/api/user/courses/progress", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      // Get total enrolled courses
+      const totalCourses = await db.select({ count: sql<number>`count(*)` })
+        .from(courseEnrollments)
+        .where(eq(courseEnrollments.userId, req.user.id));
+
+      // Get completed courses
+      const completedCourses = await db.select({ count: sql<number>`count(*)` })
+        .from(courseEnrollments)
+        .where(
+          and(
+            eq(courseEnrollments.userId, req.user.id),
+            sql`${courseEnrollments.completedAt} is not null`
+          )
+        );
+
+      const progress = {
+        completedCourses: completedCourses[0].count,
+        totalCourses: totalCourses[0].count,
+        percentageComplete: Math.round((completedCourses[0].count / totalCourses[0].count) * 100)
+      };
+
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching overall progress:", error);
+      res.status(500).json({ error: "Failed to fetch overall progress" });
+    }
+  });
+
+  // Mark lesson as completed
+  app.post("/api/lessons/:lessonId/complete", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const lessonId = parseInt(req.params.lessonId);
+
+      const [progress] = await db.insert(lessonProgress)
+        .values({
+          lessonId,
+          userId: req.user.id,
+          completed: true,
+          lastAccessed: new Date(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [lessonProgress.lessonId, lessonProgress.userId],
+          set: {
+            completed: true,
+            updatedAt: new Date(),
+          }
+        })
+        .returning();
+
+      res.status(201).json(progress);
+    } catch (error) {
+      console.error("Error marking lesson as completed:", error);
+      res.status(500).json({ error: "Failed to mark lesson as completed" });
     }
   });
 

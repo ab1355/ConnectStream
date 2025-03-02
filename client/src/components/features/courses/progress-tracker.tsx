@@ -1,22 +1,59 @@
 import { Progress } from "@/components/ui/progress";
+import { useQuery } from "@tanstack/react-query";
+import { Loader2 } from "lucide-react";
 
-export function ProgressTracker() {
-  // This would typically come from an API
-  const progress = {
-    completedCourses: 3,
-    totalCourses: 12,
-    progressPercentage: 25
-  };
+interface ProgressTrackerProps {
+  courseId?: number;
+}
 
-  return (
-    <div className="flex items-center gap-4">
-      <div className="text-sm text-muted-foreground">
-        <span className="font-medium text-foreground">{progress.completedCourses}</span>
-        {" / "}
-        <span>{progress.totalCourses}</span>
-        {" courses completed"}
+export function ProgressTracker({ courseId }: ProgressTrackerProps) {
+  const { data: progress, isLoading } = useQuery({
+    queryKey: ["/api/courses", courseId, "progress"],
+    enabled: !!courseId,
+  });
+
+  const { data: overallProgress, isLoading: loadingOverall } = useQuery({
+    queryKey: ["/api/user/courses/progress"],
+    enabled: !courseId, // Only fetch overall progress when not viewing a specific course
+  });
+
+  if (isLoading || loadingOverall) {
+    return (
+      <div className="flex items-center gap-2">
+        <Loader2 className="w-4 h-4 animate-spin text-muted-foreground" />
+        <span className="text-sm text-muted-foreground">Loading progress...</span>
       </div>
-      <Progress value={progress.progressPercentage} className="w-[100px]" />
-    </div>
-  );
+    );
+  }
+
+  if (courseId && progress) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{progress.completedLessons}</span>
+          {" / "}
+          <span>{progress.totalLessons}</span>
+          {" lessons completed"}
+        </div>
+        <Progress value={progress.percentageComplete} className="w-[100px]" />
+      </div>
+    );
+  }
+
+  // Show overall course progress
+  if (overallProgress) {
+    return (
+      <div className="flex items-center gap-4">
+        <div className="text-sm text-muted-foreground">
+          <span className="font-medium text-foreground">{overallProgress.completedCourses}</span>
+          {" / "}
+          <span>{overallProgress.totalCourses}</span>
+          {" courses completed"}
+        </div>
+        <Progress value={overallProgress.percentageComplete} className="w-[100px]" />
+      </div>
+    );
+  }
+
+  return null;
 }

@@ -519,3 +519,24 @@ export type BadgeDisplay = {
   badgeColor?: string;
   badgeType: string;
 };
+
+// Add new tracking-related schemas
+export const lessonProgress = pgTable("lesson_progress", {
+  id: serial("id").primaryKey(),
+  lessonId: serial("lesson_id").references(() => lessons.id),
+  userId: serial("user_id").references(() => users.id),
+  completed: boolean("completed").default(false),
+  lastAccessed: timestamp("last_accessed").defaultNow(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Add Zod schema
+export const insertLessonProgressSchema = createInsertSchema(lessonProgress).pick({
+  lessonId: true,
+  completed: true,
+});
+
+// Add types
+export type LessonProgress = typeof lessonProgress.$inferSelect;
+export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
