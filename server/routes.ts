@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks } from "@shared/schema"; // Added import for users table and bookmarks table
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies } from "@shared/schema"; // Added import for users table and bookmarks table
 import { eq, or, and, sql, desc } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
@@ -20,6 +20,8 @@ import { z } from "zod"; // Added import for zod
 import multer from 'multer';
 import { mediaStorageService } from './services/media-storage';
 import path from 'path';
+import { insertLessonSchema, insertLessonDiscussionSchema, insertLessonDiscussionReplySchema } from "@shared/schema";
+
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -985,6 +987,103 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating theme preferences:", error);
       res.status(500).json({ error: "Failed to update theme preferences" });
+    }
+  });
+
+  app.get("/api/lessons/:lessonId/discussions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const lessonId = parseInt(req.params.lessonId);
+      const discussions = await db.select({
+        id: lessonDiscussions.id,
+        title: lessonDiscussions.title,
+        content: lessonDiscussions.content,
+        isPinned: lessonDiscussions.isPinned,
+        createdAt: lessonDiscussions.createdAt,
+        updatedAt: lessonDiscussions.updatedAt,
+        authorId: lessonDiscussions.authorId,
+        author: {
+          username: users.username,
+          displayName: users.displayName,
+        },
+      })
+        .from(lessonDiscussions)
+        .leftJoin(users, eq(lessonDiscussions.authorId, users.id))
+        .where(eq(lessonDiscussions.lessonId, lessonId))
+        .orderBy(desc(lessonDiscussions.createdAt));
+
+      res.json(discussions);
+    } catch (error) {
+      console.error("Error fetching lesson discussions:", error);
+      res.status(500).json({ error: "Failed to fetch lesson discussions" });
+    }
+  });
+
+  app.post("/api/lessons/:lessonId/discussions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertLessonDiscussionSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [discussion] = await db.insert(lessonDiscussions)
+        .values({
+          ...validation.data,
+          authorId: req.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      res.status(201).json(discussion);
+    } catch (error) {
+      console.error("Error creating lesson discussion:", error);
+      res.status(500).json({ error: "Failed to create lesson discussion" });
+    }
+  });
+
+  app.post("/api/discussions/:discussionId/replies", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertLessonDiscussionReplySchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [reply] = await db.insert(lessonDiscussionReplies)
+        .values({
+          ...validation.data,
+          authorId: req.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      res.status(201).json(reply);
+    } catch (error) {
+      console.error("Error creating discussion reply:", error);
+      res.status(500).json({ error: "Failed to create discussion reply" });
+    }
+  });
+
+  app.patch("/api/discussions/:discussionId/pin", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const discussionId = parseInt(req.params.discussionId);
+      const [discussion] = await db.update(lessonDiscussions)
+        .set({ isPinned: true })
+        .where(eq(lessonDiscussions.id, discussionId))
+        .returning();
+
+      res.json(discussion);
+    } catch (error) {
+      console.error("Error pinning discussion:", error);
+      res.status(500).json({ error: "Failed to pin discussion" });
     }
   });
 

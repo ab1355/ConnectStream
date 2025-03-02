@@ -244,6 +244,37 @@ export const courseBlocks = pgTable("course_blocks", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const lessons = pgTable("lessons", {
+  id: serial("id").primaryKey(),
+  sectionId: serial("section_id").references(() => courseSections.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  order: integer("order").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const lessonDiscussions = pgTable("lesson_discussions", {
+  id: serial("id").primaryKey(),
+  lessonId: serial("lesson_id").references(() => lessons.id),
+  authorId: serial("author_id").references(() => users.id),
+  title: text("title").notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  isPinned: boolean("is_pinned").default(false),
+});
+
+export const lessonDiscussionReplies = pgTable("lesson_discussion_replies", {
+  id: serial("id").primaryKey(),
+  discussionId: serial("discussion_id").references(() => lessonDiscussions.id),
+  authorId: serial("author_id").references(() => users.id),
+  content: text("content").notNull(),
+  parentReplyId: serial("parent_reply_id").references((): any => lessonDiscussionReplies.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 export const courseEnrollments = pgTable("course_enrollments", {
   id: serial("id").primaryKey(),
   courseId: serial("course_id").references(() => courses.id),
@@ -396,6 +427,26 @@ export const insertCourseBlockSchema = createInsertSchema(courseBlocks).pick({
   metadata: true,
 });
 
+export const insertLessonSchema = createInsertSchema(lessons).pick({
+  sectionId: true,
+  title: true,
+  content: true,
+  order: true,
+});
+
+export const insertLessonDiscussionSchema = createInsertSchema(lessonDiscussions).pick({
+  lessonId: true,
+  title: true,
+  content: true,
+  isPinned: true,
+});
+
+export const insertLessonDiscussionReplySchema = createInsertSchema(lessonDiscussionReplies).pick({
+  discussionId: true,
+  content: true,
+  parentReplyId: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -452,6 +503,14 @@ export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
 export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type InsertCourseSection = z.infer<typeof insertCourseSectionSchema>;
 export type InsertCourseBlock = z.infer<typeof insertCourseBlockSchema>;
+
+export type Lesson = typeof lessons.$inferSelect;
+export type LessonDiscussion = typeof lessonDiscussions.$inferSelect;
+export type LessonDiscussionReply = typeof lessonDiscussionReplies.$inferSelect;
+
+export type InsertLesson = z.infer<typeof insertLessonSchema>;
+export type InsertLessonDiscussion = z.infer<typeof insertLessonDiscussionSchema>;
+export type InsertLessonDiscussionReply = z.infer<typeof insertLessonDiscussionReplySchema>;
 
 export type BadgeDisplay = {
   name: string;
