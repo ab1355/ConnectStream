@@ -926,7 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })        .where(eq(users.id, req.user.id))
         .returning();
 
-      // For demo purposes, we'll just log what would be sent in the digest
+      //      // For demo purposes, we'll just log what would be sent in the digest
       console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
 
       res.json(updatedUser);
@@ -1281,11 +1281,25 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
-  const wss = new WebSocketServer({ 
+  const wss = new WebSocketServer({
     server: httpServer,
-    path: '/api/ws', // Make sure path matches client configuration
-    clientTracking: true,
-    perMessageDeflate: false // Disable per-message deflate to reduce latency
+    path: '/api/ws',
+    verifyClient: (info, cb) => {
+      const clientUrl = new URL(info.req.url!, `http://${info.req.headers.host}`);
+
+      // Log connection attempts for debugging
+      console.log('WebSocket connection attempt:', {
+        origin: info.origin,
+        secure: info.secure,
+        url: info.req.url,
+        host: info.req.headers.host,
+        path: clientUrl.pathname,
+        query: clientUrl.search
+      });
+
+      // Accept all connections for now
+      cb(true);
+    }
   });
 
   wss.on('connection', (ws, req) => {
@@ -1299,7 +1313,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       try {
         const data = JSON.parse(message.toString());
         console.log('Received message:', data);
-        // Handle message types here
       } catch (error) {
         console.error('Error processing message:', error);
       }

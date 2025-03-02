@@ -3,14 +3,23 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 1000;
 
 export function createWebSocket() {
-  // Get the WebSocket URL using the VITE_DEV_SERVER_URL environment variable in development
-  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsHost = import.meta.env.DEV 
-    ? new URL(import.meta.env.VITE_DEV_SERVER_URL).host 
-    : window.location.host;
-  const wsUrl = `${wsProtocol}//${wsHost}/api/ws`;
+  // Get the WebSocket URL based on the environment variables
+  const host = import.meta.env.VITE_WS_HOST || window.location.host;
+  const path = import.meta.env.VITE_WS_PATH || '/api/ws';
+  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${protocol}//${host}${path}`;
 
-  console.log('Attempting WebSocket connection to:', wsUrl); // Debug log
+  console.log('WebSocket Environment Variables:', {
+    VITE_WS_HOST: import.meta.env.VITE_WS_HOST,
+    VITE_WS_PATH: import.meta.env.VITE_WS_PATH,
+    VITE_DEV_SERVER_URL: import.meta.env.VITE_DEV_SERVER_URL,
+    VITE_HMR_HOST: import.meta.env.VITE_HMR_HOST,
+    VITE_HMR_PROTOCOL: import.meta.env.VITE_HMR_PROTOCOL,
+    host,
+    path,
+    protocol,
+    constructed_url: wsUrl
+  });
 
   const socket = new WebSocket(wsUrl);
 
@@ -21,7 +30,6 @@ export function createWebSocket() {
 
   socket.addEventListener('error', (error) => {
     console.error('WebSocket connection error:', error);
-    // Don't attempt to reconnect on error, let the close handler handle it
   });
 
   socket.addEventListener('close', (event) => {
