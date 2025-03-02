@@ -1300,60 +1300,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   const httpServer = createServer(app);
 
   // WebSocket Server Setup
-  const wss = new WebSocketServer({
-    server: httpServer,
-    path: '/ws'
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws' // Use a specific path to avoid conflicts with Vite's HMR
   });
 
-  // Keep track of connected clients
-  const clients = new Map<string, WebSocket>();
+  wss.on('connection', (ws) => {
+    console.log('WebSocket client connected');
 
-  wss.on('connection', (ws, req) => {
-    if (!req.url) return;
-
-    const userId = new URL(
-      req.url,
-      `${req.headers.origin || 'http://localhost'}`
-    ).searchParams.get('userId');
-
-    if (!userId) return;
-
-    clients.set(userId, ws);
-
-    ws.on('message', async (data) => {
-      try {
-        const message = JSON.parse(data.toString());
-
-        // Handle different message types
-        switch (message.type) {
-          case 'notification':
-            // Send notification to specific user
-            const recipientWs = clients.get(message.userId?.toString());
-            if (recipientWs?.readyState === WebSocket.OPEN) {
-              recipientWs.send(JSON.stringify({
-                type: 'notification',
-                data: message.data
-              }));
-            }
-            break;
-
-          case 'chat':
-            // Handle chat messages
-            const chatRecipientWs = clients.get(message.receiverId?.toString());
-            if (chatRecipientWs?.readyState === WebSocket.OPEN) {
-              chatRecipientWs.send(JSON.stringify(message));
-            }
-            break;
-        }
-      } catch (error) {
-        console.error('WebSocket message error:', error);
-      }
-    });
+    ws.on('error', console.error);
 
     ws.on('close', () => {
-      clients.delete(userId);
+      console.log('Client disconnected');
     });
   });
 
   return httpServer;
+
 }
