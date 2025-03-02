@@ -42,26 +42,24 @@ export function Sidebar() {
           </Link>
         ))}
 
-        {user && (user.role === "admin" || user.role === "moderator") && (
+        {/* Admin section */}
+        {user?.role === "admin" && (
           <>
             <div className="pt-4">
               <h4 className="px-2 text-sm font-bold text-primary">Admin Dashboard</h4>
             </div>
-            {/* Course Management link - Only visible to admins */}
-            {user.role === "admin" && (
-              <Link href="/admin/course-management">
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start text-muted-foreground hover:text-foreground",
-                    location === "/admin/course-management" && "bg-accent text-foreground"
-                  )}
-                >
-                  <BookOpenCheck className="mr-2 h-4 w-4" />
-                  Course Management
-                </Button>
-              </Link>
-            )}
+            <Link href="/admin/course-management">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start text-muted-foreground hover:text-foreground",
+                  location === "/admin/course-management" && "bg-accent text-foreground"
+                )}
+              >
+                <BookOpenCheck className="mr-2 h-4 w-4" />
+                Course Management
+              </Button>
+            </Link>
             <Link href="/admin/user-approvals">
               <Button
                 variant="ghost"
@@ -74,20 +72,18 @@ export function Sidebar() {
                 User Approvals
               </Button>
             </Link>
-            {user.role === "admin" && (
-              <Link href="/admin/role-management">
-                <Button
-                  variant="ghost"
-                  className={cn(
-                    "w-full justify-start text-muted-foreground hover:text-foreground",
-                    location === "/admin/role-management" && "bg-accent text-foreground"
-                  )}
-                >
-                  <UsersIcon className="mr-2 h-4 w-4" />
-                  Role Management
-                </Button>
-              </Link>
-            )}
+            <Link href="/admin/role-management">
+              <Button
+                variant="ghost"
+                className={cn(
+                  "w-full justify-start text-muted-foreground hover:text-foreground",
+                  location === "/admin/role-management" && "bg-accent text-foreground"
+                )}
+              >
+                <UsersIcon className="mr-2 h-4 w-4" />
+                Role Management
+              </Button>
+            </Link>
           </>
         )}
       </nav>

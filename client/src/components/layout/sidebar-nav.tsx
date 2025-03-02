@@ -13,10 +13,6 @@ import {
 export function SidebarNav() {
   const { user } = useAuth();
 
-  // Temporary debug information
-  console.log("Current user role:", user?.role);
-  console.log("Is admin?", user?.role === "admin");
-
   return (
     <nav className="space-y-1">
       <NavLink href="/courses">
@@ -36,24 +32,19 @@ export function SidebarNav() {
         Spaces
       </NavLink>
 
-      {/* Debug info */}
-      <div className="px-2 text-xs text-muted-foreground">
-        Role: {user?.role || 'not set'}
-      </div>
-
       {/* Admin section */}
       {user?.role === "admin" && (
         <>
           <div className="pt-4">
             <h4 className="px-2 text-sm font-bold text-primary">Admin Dashboard</h4>
           </div>
+          <NavLink href="/admin/course-management">
+            <BookOpenCheck className="h-4 w-4" />
+            Course Management
+          </NavLink>
           <NavLink href="/admin/user-approvals">
             <Shield className="h-4 w-4" />
             User Approvals
-          </NavLink>
-          <NavLink href="/admin/course-management" className="bg-accent/50">
-            <BookOpenCheck className="h-4 w-4" />
-            Course Management
           </NavLink>
         </>
       )}
