@@ -923,8 +923,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: validation.data.email,
           emailDigestEnabled: validation.data.emailDigestEnabled,
           emailDigestFrequency: validation.data.emailDigestFrequency,
-        })
-        .where(eq(users.id, req.user.id))
+        })        .where(eq(users.id, req.user.id))
         .returning();
 
       // For demo purposes, we'll just log what would be sent in the digest
@@ -1301,18 +1300,34 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // WebSocket Server Setup
   const wss = new WebSocketServer({ 
-    server: httpServer, 
-    path: '/ws' // Use a specific path to avoid conflicts with Vite's HMR
+    server: httpServer,
+    path: '/ws',
+    clientTracking: true,
   });
 
-  wss.on('connection', (ws) => {
+  wss.on('connection', (ws, req) => {
     console.log('WebSocket client connected');
 
-    ws.on('error', console.error);
+    ws.on('message', (message) => {
+      try {
+        const data = JSON.parse(message.toString());
+        console.log('Received message:', data);
+        // Handle message types here
+      } catch (error) {
+        console.error('Error processing message:', error);
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
 
     ws.on('close', () => {
       console.log('Client disconnected');
     });
+
+    // Send initial connection success message
+    ws.send(JSON.stringify({ type: 'connection', status: 'connected' }));
   });
 
   return httpServer;

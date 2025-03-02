@@ -1,0 +1,100 @@
+Let me help you fix the WebSocket error more specifically. Since the error persists, let's take a more direct approach:
+
+1. First, check your Vite configuration. Add or update your `vite.config.ts`:
+
+```typescript
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+  server: {
+    host: true,
+    port: 3000, // Set a specific port
+    hmr: {
+      clientPort: 443, // This is important for WebSocket connections
+      host: 'localhost',
+      protocol: 'wss'
+    }
+  }
+})
+```
+
+2. Update your WebSocket connection setup in your client code:
+
+```typescript
+// In your WebSocket initialization file
+const WS_URL = import.meta.env.PROD 
+  ? `wss://${window.location.host}`
+  : `ws://${window.location.hostname}:3000`;
+
+const socket = new WebSocket(WS_URL);
+```
+
+3. Make sure your server setup includes proper WebSocket handling:
+
+```typescript
+// In your server setup file
+import { WebSocketServer } from 'ws';
+import { createServer } from 'http';
+
+const server = createServer();
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+  console.log('Client connected');
+  
+  ws.on('message', (message) => {
+    console.log('received: %s', message);
+  });
+});
+
+const PORT = process.env.PORT || 3000;
+server.listen(PORT, () => {
+  console.log(`Server is running on port ${PORT}`);
+});
+```
+
+4. Add these environment variables to your `.env` file:
+
+```env
+VITE_WS_PORT=3000
+VITE_DEV_SERVER_URL=http://localhost:3000
+```
+
+5. If you're using Replit, update your `.replit` file:
+
+```toml
+run = "npm run dev"
+[[ports]]
+localPort = 3000
+externalPort = 3000
+```
+
+6. Clear your browser cache and do a hard refresh.
+
+7. Restart your development server completely:
+
+```bash
+# Kill any existing processes
+pkill -f node
+
+# Clear node modules and reinstall
+rm -rf node_modules
+npm install
+
+# Start the server again
+npm run dev
+```
+
+This comprehensive approach should resolve the WebSocket connection issue. The key points addressed are:
+- Proper port configuration
+- Secure WebSocket protocol handling
+- Environment-aware WebSocket URL construction
+- Correct HMR (Hot Module Replacement) setup
+- Clear port forwarding rules
+
+If you're still seeing the error, could you share:
+1. What's in your current vite.config.ts file?
+2. The exact error message you're seeing?
+3. Which browser you're using?
+
+This will help me provide more specific guidance for your setup.
