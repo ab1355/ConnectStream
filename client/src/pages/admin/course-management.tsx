@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import { RoleVisibility } from "@/components/features/admin/role-visibility";
 import { AICourseBuilder } from "@/components/features/admin/ai-course-builder";
 import { CourseImporter } from "@/components/features/courses/course-importer";
+import { FeatureAccessManager } from "@/components/features/admin/feature-access-manager";
+import { SpaceBrandingManager } from "@/components/features/admin/space-branding-manager";
 
 export default function CourseManagementPage() {
   const { user } = useAuth();
@@ -38,7 +40,7 @@ export default function CourseManagementPage() {
 
   return (
     <div className="container py-8">
-      <h1 className="text-2xl font-bold mb-6">Course Management Dashboard</h1>
+      <h1 className="text-2xl font-bold mb-6">Admin Dashboard</h1>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
@@ -82,33 +84,45 @@ export default function CourseManagementPage() {
         </Card>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div className="grid grid-cols-1 gap-8">
         <div>
-          <h2 className="text-xl font-semibold mb-4">Course Import</h2>
-          <CourseImporter />
+          <h2 className="text-xl font-semibold mb-4">Feature Access Control</h2>
+          <FeatureAccessManager />
         </div>
+
         <div>
-          <h2 className="text-xl font-semibold mb-4">AI Course Generation</h2>
-          <AICourseBuilder />
+          <h2 className="text-xl font-semibold mb-4">Space Branding</h2>
+          <SpaceBrandingManager />
         </div>
-      </div>
 
-      <div className="mt-8">
-        <h2 className="text-xl font-semibold mb-4">Role Management</h2>
-        <RoleVisibility />
-      </div>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Course Import</h2>
+            <CourseImporter />
+          </div>
+          <div>
+            <h2 className="text-xl font-semibold mb-4">AI Course Generation</h2>
+            <AICourseBuilder />
+          </div>
+        </div>
 
-      <Card className="mt-8">
-        <CardHeader>
-          <CardTitle>Student Enrollments</CardTitle>
-          <CardDescription>
-            Manage and monitor student progress across all courses
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          {/* TODO: Implement DataTable with enrollment data */}
-        </CardContent>
-      </Card>
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Role Management</h2>
+          <RoleVisibility />
+        </div>
+
+        <Card className="mt-8">
+          <CardHeader>
+            <CardTitle>Student Enrollments</CardTitle>
+            <CardDescription>
+              Manage and monitor student progress across all courses
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {/* TODO: Implement DataTable with enrollment data */}
+          </CardContent>
+        </Card>
+      </div>
     </div>
   );
 }
