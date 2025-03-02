@@ -42,8 +42,8 @@ function Router() {
       <ProtectedRoute path="/custom-slug" component={CustomSlugPage} />
       <ProtectedRoute path="/settings/email" component={EmailSettingsPage} />
       <ProtectedRoute path="/settings/theme" component={ThemeSettingsPage} />
-      <ProtectedRoute path="/admin/user-approvals" component={UserApprovalsPage} />
       <ProtectedRoute path="/admin/course-management" component={CourseManagementPage} />
+      <ProtectedRoute path="/admin/user-approvals" component={UserApprovalsPage} />
       <ProtectedRoute path="/admin/role-management" component={RoleManagementPage} />
       <Route component={NotFound} />
     </Switch>

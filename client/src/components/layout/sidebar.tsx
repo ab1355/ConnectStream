@@ -1,7 +1,7 @@
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Link, useLocation } from "wouter";
-import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle, Shield, Bookmark, Link2, Mail, Palette, UsersIcon } from "lucide-react";
+import { Home, Users, MessageSquare, Trophy, BookOpen, Layout, MessageCircle, Shield, Bookmark, Link2, Mail, Palette, UsersIcon, BookOpenCheck } from "lucide-react";
 import { CustomLinks } from "./custom-links";
 import { CustomLinksDialog } from "@/components/features/settings/custom-links-dialog";
 import { useAuth } from "@/hooks/use-auth";
@@ -47,6 +47,21 @@ export function Sidebar() {
             <div className="pt-4">
               <h4 className="px-2 text-sm font-bold text-primary">Admin Dashboard</h4>
             </div>
+            {/* Course Management link - Only visible to admins */}
+            {user.role === "admin" && (
+              <Link href="/admin/course-management">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start text-muted-foreground hover:text-foreground",
+                    location === "/admin/course-management" && "bg-accent text-foreground"
+                  )}
+                >
+                  <BookOpenCheck className="mr-2 h-4 w-4" />
+                  Course Management
+                </Button>
+              </Link>
+            )}
             <Link href="/admin/user-approvals">
               <Button
                 variant="ghost"
@@ -60,20 +75,18 @@ export function Sidebar() {
               </Button>
             </Link>
             {user.role === "admin" && (
-              <>
-                <Link href="/admin/role-management">
-                  <Button
-                    variant="ghost"
-                    className={cn(
-                      "w-full justify-start text-muted-foreground hover:text-foreground",
-                      location === "/admin/role-management" && "bg-accent text-foreground"
-                    )}
-                  >
-                    <UsersIcon className="mr-2 h-4 w-4" />
-                    Role Management
-                  </Button>
-                </Link>
-              </>
+              <Link href="/admin/role-management">
+                <Button
+                  variant="ghost"
+                  className={cn(
+                    "w-full justify-start text-muted-foreground hover:text-foreground",
+                    location === "/admin/role-management" && "bg-accent text-foreground"
+                  )}
+                >
+                  <UsersIcon className="mr-2 h-4 w-4" />
+                  Role Management
+                </Button>
+              </Link>
             )}
           </>
         )}
