@@ -1,7 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { CourseCard } from "./course-card";
 import { Course } from "@shared/schema";
-import { Loader2 } from "lucide-react";
+import { LoadingScreen } from "@/components/ui/loading-screen";
 
 export function CourseGrid() {
   const { data: courses, isLoading } = useQuery<Course[]>({
@@ -10,9 +10,10 @@ export function CourseGrid() {
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center h-64">
-        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
-      </div>
+      <LoadingScreen 
+        variant="inline" 
+        message="Loading courses..." 
+      />
     );
   }
 
