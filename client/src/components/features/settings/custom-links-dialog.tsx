@@ -5,7 +5,20 @@ import { insertCustomLinkSchema, type InsertCustomLink } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import * as Icons from "lucide-react";
+import {
+  Link,
+  Globe,
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  Linkedin,
+  Github,
+  CreditCard,
+  DollarSign,
+  Wallet, // Replace Bank with Wallet
+  Bookmark,
+} from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -31,7 +44,23 @@ const categories = [
   { value: "other", label: "Other" },
 ];
 
-const commonIcons = ["Link", "Globe", "Facebook", "Twitter", "Instagram", "Youtube", "Linkedin", "Github", "CreditCard", "DollarSign", "Bank", "Bookmark"];
+// Map of icon names to their components
+const iconComponents = {
+  Link,
+  Globe,
+  Facebook,
+  Twitter,
+  Instagram,
+  Youtube,
+  Linkedin,
+  Github,
+  CreditCard,
+  DollarSign,
+  Wallet, // Replace Bank with Wallet
+  Bookmark,
+};
+
+const commonIcons = Object.keys(iconComponents);
 
 export function CustomLinksDialog() {
   const [open, setOpen] = useState(false);
@@ -139,7 +168,7 @@ export function CustomLinksDialog() {
               </SelectTrigger>
               <SelectContent>
                 {commonIcons.map((iconName) => {
-                  const IconComponent = (Icons as any)[iconName];
+                  const IconComponent = iconComponents[iconName as keyof typeof iconComponents];
                   return (
                     <SelectItem key={iconName} value={iconName}>
                       <div className="flex items-center gap-2">

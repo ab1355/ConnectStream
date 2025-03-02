@@ -78,7 +78,7 @@ export function RoleVisibility() {
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {roleStats?.distribution.map((stat) => (
               <div key={stat.role} className="flex items-center gap-2">
-                <Badge variant={stat.role === 'admin' ? 'destructive' : stat.role === 'moderator' ? 'warning' : 'secondary'}>
+                <Badge variant={stat.role === 'admin' ? 'destructive' : (stat.role === 'moderator' ? 'outline' : 'secondary')}>
                   {stat.count}
                 </Badge>
                 <span className="text-sm font-medium">{rolePermissions[stat.role]?.name || stat.role}</span>
