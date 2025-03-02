@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies } from "@shared/schema"; // Added import for users table and bookmarks table
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons } from "@shared/schema"; // Added import for users table and bookmarks table
 import { eq, or, and, sql, desc } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
@@ -21,7 +21,6 @@ import multer from 'multer';
 import { mediaStorageService } from './services/media-storage';
 import path from 'path';
 import { insertLessonSchema, insertLessonDiscussionSchema, insertLessonDiscussionReplySchema } from "@shared/schema";
-
 
 export async function registerRoutes(app: Express): Promise<Server> {
   setupAuth(app);
@@ -987,6 +986,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating theme preferences:", error);
       res.status(500).json({ error: "Failed to update theme preferences" });
+    }
+  });
+
+  app.get("/api/lessons/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const lessonId = parseInt(req.params.id);
+      const [lesson] = await db.select()
+        .from(lessons)
+        .where(eq(lessons.id, lessonId));
+
+      if (!lesson) {
+        return res.status(404).json({ error: "Lesson not found" });
+      }
+
+      res.json(lesson);
+    } catch (error) {
+      console.error("Error fetching lesson:", error);
+      res.status(500).json({ error: "Failed to fetch lesson" });
     }
   });
 
