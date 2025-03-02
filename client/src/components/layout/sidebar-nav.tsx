@@ -13,6 +13,10 @@ import {
 export function SidebarNav() {
   const { user } = useAuth();
 
+  // Temporary debug information
+  console.log("Current user role:", user?.role);
+  console.log("Is admin?", user?.role === "admin");
+
   return (
     <nav className="space-y-1">
       <NavLink href="/courses">
@@ -31,6 +35,11 @@ export function SidebarNav() {
         <Layout className="h-4 w-4" />
         Spaces
       </NavLink>
+
+      {/* Debug info */}
+      <div className="px-2 text-xs text-muted-foreground">
+        Role: {user?.role || 'not set'}
+      </div>
 
       {/* Admin section */}
       {user?.role === "admin" && (
