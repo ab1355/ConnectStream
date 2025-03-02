@@ -923,10 +923,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
           email: validation.data.email,
           emailDigestEnabled: validation.data.emailDigestEnabled,
           emailDigestFrequency: validation.data.emailDigestFrequency,
-        })        .where(eq(users.id, req.user.id))
+        })
+        .where(eq(users.id, req.user.id))
         .returning();
 
-      //      // For demo purposes, we'll just log what would be sent in the digest      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
+      //      // For demo purposes,      //      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
 
       res.json(updatedUser);
     } catch (error) {
@@ -1325,6 +1326,77 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating course:", error);
       res.status(500).json({ error: "Failed to generate course" });
+    }
+  });
+
+  // Add this after the existing course routes
+  app.post("/api/courses/import", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      // Parse the uploaded JSON file
+      const coursesData = JSON.parse(req.body.toString());
+
+      // Validate the courses data structure
+      if (!Array.isArray(coursesData)) {
+        return res.status(400).json({ error: "Invalid courses data format" });
+      }
+
+      const importedCourses = [];
+
+      for (const courseData of coursesData) {
+        // Create the course
+        const [course] = await db.insert(courses)
+          .values({
+            title: courseData.title,
+            description: courseData.description,
+            coverImage: courseData.coverImage,
+            authorId: req.user.id,
+            published: courseData.published || false,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .returning();
+
+        // Create sections if they exist
+        if (Array.isArray(courseData.sections)) {
+          for (let i = 0; i < courseData.sections.length; i++) {
+            const section = courseData.sections[i];
+            const [courseSection] = await db.insert(courseSections)
+              .values({
+                courseId: course.id,
+                title: section.title,
+                order: i + 1,
+                createdAt: new Date(),
+              })
+              .returning();
+
+            // Create lessons if they exist
+            if (Array.isArray(section.lessons)) {
+              for (let j = 0; j < section.lessons.length; j++) {
+                const lesson = section.lessons[j];
+                await db.insert(lessons)
+                  .values({
+                    sectionId: courseSection.id,
+                    title: lesson.title,
+                    content: lesson.content,
+                    order: j + 1,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                  });
+              }
+            }
+          }
+        }
+
+        importedCourses.push(course);
+      }
+
+      res.status(201).json(importedCourses);
+    } catch (error) {
+      console.error("Error importing courses:", error);
+      res.status(500).json({ error: "Failed to import courses" });
     }
   });
 
