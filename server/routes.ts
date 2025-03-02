@@ -1209,6 +1209,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this endpoint to the existing routes
+  app.get("/api/admin/course-enrollments", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      // Get total enrollments
+      const [totalEnrollments] = await db.select({ count: sql<number>`count(*)` })
+        .from(courseEnrollments);
+
+      // Get active courses (has at least one enrollment)
+      const [activeCourses] = await db.select({ count: sql<number>`count(distinct ${courseEnrollments.courseId})` })
+        .from(courseEnrollments);
+
+      // Calculate average completion rate
+      const [completionStats] = await db.select({
+        completed: sql<number>`count(*) filter (where completed_at is not null)`,
+        total: sql<number>`count(*)`
+      })
+        .from(courseEnrollments);
+
+      const averageCompletionRate = Math.round((completionStats.completed / completionStats.total) * 100) || 0;
+
+      // Get detailed enrollment data
+      const enrollmentDetails = await db.select({
+        id: courseEnrollments.id,
+        courseId: courseEnrollments.courseId,
+        userId: courseEnrollments.userId,
+        progress: courseEnrollments.progress,
+        completedAt: courseEnrollments.completedAt,
+        createdAt: courseEnrollments.createdAt,
+        course: {
+          title: courses.title,
+        },
+        user: {
+          username: users.username,
+          displayName: users.displayName,
+        },
+      })
+        .from(courseEnrollments)
+        .leftJoin(courses, eq(courseEnrollments.courseId, courses.id))
+        .leftJoin(users, eq(courseEnrollments.userId, users.id))
+        .orderBy(desc(courseEnrollments.createdAt));
+
+      res.json({
+        totalEnrollments: totalEnrollments.count,
+        activeCourses: activeCourses.count,
+        averageCompletionRate,
+        enrollments: enrollmentDetails,
+      });
+    } catch (error) {
+      console.error("Error fetching admin course enrollments:", error);
+      res.status(500).json({ error: "Failed to fetch admin course enrollments" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup

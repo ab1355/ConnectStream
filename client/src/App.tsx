@@ -14,6 +14,7 @@ import DiscussionsPage from "@/pages/discussions-page";
 import CoursesPage from "@/pages/courses-page";
 import MessagesPage from "@/pages/messages-page";
 import UserApprovalsPage from "@/pages/admin/user-approvals";
+import CourseManagementPage from "@/pages/admin/course-management";
 import BookmarksPage from "@/pages/bookmarks-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import CustomSlugPage from "@/pages/custom-slug-page";
@@ -41,6 +42,7 @@ function Router() {
       <ProtectedRoute path="/settings/email" component={EmailSettingsPage} />
       <ProtectedRoute path="/settings/theme" component={ThemeSettingsPage} />
       <ProtectedRoute path="/admin/user-approvals" component={UserApprovalsPage} />
+      <ProtectedRoute path="/admin/course-management" component={CourseManagementPage} />
       <Route component={NotFound} />
     </Switch>
   );
