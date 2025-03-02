@@ -1301,8 +1301,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket Server Setup
   const wss = new WebSocketServer({ 
     server: httpServer,
-    path: '/ws',
-    clientTracking: true,
+    path: '/api/ws', // Changed path to avoid conflict with Vite
+    clientTracking: true
   });
 
   wss.on('connection', (ws, req) => {

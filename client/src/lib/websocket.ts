@@ -3,10 +3,9 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 1000;
 
 export function createWebSocket() {
-  // Use the current host and protocol from the browser
-  const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host; // This will work correctly in both Replit and local dev
-  const wsUrl = `${protocol}//${host}/ws`;
+  // Use the current host from the browser
+  const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+  const wsUrl = `${wsProtocol}//${window.location.host}/api/ws`;
 
   console.log('Attempting WebSocket connection to:', wsUrl); // Debug log
 
