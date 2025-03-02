@@ -3,9 +3,12 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 1000;
 
 export function createWebSocket() {
+  // Use the current host and protocol from the browser
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const host = window.location.host;
+  const host = window.location.host; // This will work correctly in both Replit and local dev
   const wsUrl = `${protocol}//${host}/ws`;
+
+  console.log('Attempting WebSocket connection to:', wsUrl); // Debug log
 
   const socket = new WebSocket(wsUrl);
 
@@ -15,19 +18,24 @@ export function createWebSocket() {
   });
 
   socket.addEventListener('error', (error) => {
-    console.error('WebSocket error:', error);
+    console.error('WebSocket connection error:', error);
+    // Don't attempt to reconnect on error, let the close handler handle it
   });
 
-  socket.addEventListener('close', () => {
-    console.log('WebSocket connection closed');
+  socket.addEventListener('close', (event) => {
+    console.log('WebSocket connection closed', event.code, event.reason);
 
-    // Implement reconnection logic
     if (reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
       reconnectAttempts++;
-      console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+      const delay = RECONNECT_DELAY * reconnectAttempts;
+      console.log(`Attempting to reconnect (${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS}) in ${delay}ms...`);
+
       setTimeout(() => {
+        console.log('Initiating reconnection...');
         createWebSocket();
-      }, RECONNECT_DELAY * reconnectAttempts);
+      }, delay);
+    } else {
+      console.log('Max reconnection attempts reached');
     }
   });
 

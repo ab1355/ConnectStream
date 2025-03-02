@@ -1,0 +1,180 @@
+Here's a comprehensive list of common causes for WebSocket errors and their solutions:
+
+1. **Proxy/Firewall Issues**
+- Blocking WebSocket connections
+- Incorrect proxy configurations
+```nginx
+# Nginx proxy configuration example
+location /ws {
+    proxy_pass http://backend;
+    proxy_http_version 1.1;
+    proxy_set_header Upgrade $http_upgrade;
+    proxy_set_header Connection "upgrade";
+}
+```
+
+2. **SSL/TLS Configuration**
+- Mixed content (HTTP/HTTPS)
+- Invalid certificates
+- Incorrect protocol usage
+```typescript
+// Ensure correct protocol based on environment
+const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+const wsUrl = `${wsProtocol}//${window.location.host}`;
+```
+
+3. **Connection Timeouts**
+- Server timeout settings
+- Client heartbeat missing
+```typescript
+// Server-side timeout handling
+const ws = new WebSocket.Server({
+  pingTimeout: 60000,
+  pingInterval: 25000
+});
+
+// Client-side ping/pong
+const ws = new WebSocket(url);
+setInterval(() => {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.ping();
+  }
+}, 30000);
+```
+
+4. **Authentication Issues**
+- Token expiration
+- Invalid credentials
+```typescript
+// Add authentication token
+const ws = new WebSocket(
+  `${wsUrl}?token=${authToken}`
+);
+
+ws.onclose = (event) => {
+  if (event.code === 1008) { // Policy violation
+    // Handle authentication failure
+  }
+};
+```
+
+5. **Server Configuration Problems**
+- Incorrect port bindings
+- Resource limits
+```typescript
+const server = new WebSocket.Server({
+  port: process.env.WS_PORT,
+  maxPayload: 65536, // 64KB limit
+  backlog: 100, // Connection queue limit
+});
+```
+
+6. **CORS (Cross-Origin Resource Sharing)**
+- Incorrect CORS headers
+- Origin mismatch
+```typescript
+// Server-side CORS configuration
+const ws = new WebSocket.Server({
+  verifyClient: (info) => {
+    const origin = info.origin;
+    const allowedOrigins = ['https://yourdomain.com'];
+    return allowedOrigins.includes(origin);
+  }
+});
+```
+
+7. **Network Issues**
+- Load balancer configuration
+- Network latency
+```typescript
+// Client-side reconnection logic
+function createWebSocket() {
+  const ws = new WebSocket(url);
+  
+  ws.onclose = () => {
+    setTimeout(() => {
+      createWebSocket();
+    }, 1000);
+  };
+  
+  return ws;
+}
+```
+
+8. **Resource Management**
+- Memory leaks
+- Connection pooling issues
+```typescript
+// Proper cleanup
+class WebSocketManager {
+  private connections = new Set<WebSocket>();
+  
+  addConnection(ws: WebSocket) {
+    this.connections.add(ws);
+    ws.onclose = () => this.connections.delete(ws);
+  }
+  
+  cleanup() {
+    this.connections.forEach(ws => ws.close());
+    this.connections.clear();
+  }
+}
+```
+
+9. **Version Incompatibility**
+- Protocol version mismatch
+- Library version conflicts
+```typescript
+// Check WebSocket support
+if (!window.WebSocket) {
+  console.error('WebSocket not supported');
+  // Fallback to alternative communication
+}
+```
+
+10. **Development Environment Issues**
+- Hot reloading conflicts
+- Port conflicts
+```typescript
+// Vite configuration
+export default defineConfig({
+  server: {
+    hmr: {
+      protocol: 'ws',
+      host: 'localhost',
+      port: 3000,
+      clientPort: 443
+    }
+  }
+});
+```
+
+To debug WebSocket issues:
+
+```typescript
+// Debug logging
+ws.onopen = () => console.log('Connected');
+ws.onclose = (e) => console.log('Closed:', e.code, e.reason);
+ws.onerror = (e) => console.error('WebSocket error:', e);
+
+// Network monitoring
+window.addEventListener('online', () => {
+  console.log('Network available');
+  // Reconnect WebSocket
+});
+
+window.addEventListener('offline', () => {
+  console.log('Network unavailable');
+  // Handle disconnection
+});
+```
+
+Best Practices:
+1. Implement proper error handling
+2. Use reconnection strategies
+3. Monitor connection health
+4. Log important events
+5. Implement proper security measures
+6. Handle cleanup properly
+7. Use appropriate timeouts and intervals
+8. Consider connection pooling for scaling
