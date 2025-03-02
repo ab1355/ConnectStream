@@ -6,23 +6,19 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks } from "@shared/schema"; // Added import for users table and bookmarks table
-import { eq, or, and, sql } from "drizzle-orm";
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks } from "@shared/schema"; // Added import for users table and bookmarks table
+import { eq, or, and, sql, desc } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
-import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema } from "@shared/schema";
-import { polls, pollOptions, pollResponses, hashtags, postHashtags, mentions } from "@shared/schema";
+import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
 import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; //Import thread schemas
 import { userScores, achievements, userAchievements } from "@shared/schema";
-import { desc } from "drizzle-orm";
 import { notifications } from "@shared/schema";
 import { insertNotificationSchema } from "@shared/schema";
 import { customLinks } from "@shared/schema";
 import { insertCustomLinkSchema } from "@shared/schema"; // Import the new schema
-import { posts } from "@shared/schema"; // Add missing import at the top with other imports
 import { z } from "zod"; // Added import for zod
 import multer from 'multer';
 import { mediaStorageService } from './services/media-storage';
-import { mediaFiles } from '@shared/schema';
 import path from 'path';
 
 export async function registerRoutes(app: Express): Promise<Server> {
@@ -216,8 +212,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json(validation.error);
       }
       const message = await storage.createMessage({
-        ...validation.data,
-        senderId: req.user.id
+        content: validation.data.content,
+        senderId: req.user.id,
+        receiverId: validation.data.receiverId,
+        read: false
       });
       res.status(201).json(message);
     } catch (error) {
@@ -360,13 +358,104 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Course routes
   app.get("/api/courses", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
-      res.json([]);
+
+      const allCourses = await db.select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+        coverImage: courses.coverImage,
+        authorId: courses.authorId,
+        published: courses.published,
+        createdAt: courses.createdAt,
+        author: {
+          id: users.id,
+          username: users.username,
+          displayName: users.displayName,
+        },
+      })
+        .from(courses)
+        .leftJoin(users, eq(courses.authorId, users.id))
+        .orderBy(desc(courses.createdAt));
+
+      res.json(allCourses);
     } catch (error) {
       console.error("Error fetching courses:", error);
       res.status(500).json({ error: "Failed to fetch courses" });
+    }
+  });
+
+  app.post("/api/courses", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertCourseSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [course] = await db.insert(courses)
+        .values({
+          ...validation.data,
+          authorId: req.user.id,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      res.status(201).json(course);
+    } catch (error) {
+      console.error("Error creating course:", error);
+      res.status(500).json({ error: "Failed to create course" });
+    }
+  });
+
+  app.post("/api/course-sections", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertCourseSectionSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [section] = await db.insert(courseSections)
+        .values({
+          ...validation.data,
+          createdAt: new Date(),
+        })
+        .returning();
+
+      res.status(201).json(section);
+    } catch (error) {
+      console.error("Error creating course section:", error);
+      res.status(500).json({ error: "Failed to create course section" });
+    }
+  });
+
+  app.post("/api/course-blocks", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertCourseBlockSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [block] = await db.insert(courseBlocks)
+        .values({
+          ...validation.data,
+          createdAt: new Date(),
+        })
+        .returning();
+
+      res.status(201).json(block);
+    } catch (error) {
+      console.error("Error creating course block:", error);
+      res.status(500).json({ error: "Failed to create course block" });
     }
   });
 
@@ -647,6 +736,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
       const mediaFile = await mediaStorageService.saveFile(req.file, req.user.id);
 
+      // Ensure we return the correct type including the id
       res.status(201).json({
         id: mediaFile.id,
         filename: mediaFile.filename,
@@ -952,7 +1042,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     });
 
     ws.on('close', () => {
-            clients.delete(userId);
+      clients.delete(userId);
     });
   });
 

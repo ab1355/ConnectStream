@@ -2,6 +2,8 @@ import { promises as fs } from 'fs';
 import path from 'path';
 import { mediaFiles, type InsertMediaFile } from '@shared/schema';
 import { db } from '../db';
+import { eq } from 'drizzle-orm';
+import type { Multer } from 'multer';
 
 const UPLOAD_DIR = path.join(process.cwd(), 'uploads');
 

@@ -1,6 +1,7 @@
 import { pgTable, text, serial, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
+import type { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -19,7 +20,7 @@ export const users = pgTable("users", {
   themeRadius: text("theme_radius").default("0.5"), // border radius
   themeVariant: text("theme_variant").default("professional"), // 'professional', 'tint', 'vibrant'
   approvedAt: timestamp("approved_at"),
-  approvedBy: serial("approved_by").references(() => users.id),
+  approvedBy: serial("approved_by").references((): any => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -214,6 +215,44 @@ export const mediaFiles = pgTable("media_files", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const courses = pgTable("courses", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  coverImage: text("cover_image"),
+  authorId: serial("author_id").references(() => users.id),
+  published: boolean("published").default(false),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const courseSections = pgTable("course_sections", {
+  id: serial("id").primaryKey(),
+  courseId: serial("course_id").references(() => courses.id),
+  title: text("title").notNull(),
+  order: integer("order").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const courseBlocks = pgTable("course_blocks", {
+  id: serial("id").primaryKey(),
+  sectionId: serial("section_id").references(() => courseSections.id),
+  type: text("type").notNull(), // 'text', 'image', 'video', 'code', 'quiz'
+  content: text("content").notNull(),
+  order: integer("order").notNull(),
+  metadata: text("metadata"), // JSON string for block-specific settings
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const courseEnrollments = pgTable("course_enrollments", {
+  id: serial("id").primaryKey(),
+  courseId: serial("course_id").references(() => courses.id),
+  userId: serial("user_id").references(() => users.id),
+  progress: integer("progress").default(0),
+  completedAt: timestamp("completed_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -336,6 +375,27 @@ export const insertMediaFileSchema = createInsertSchema(mediaFiles).pick({
   size: true,
 });
 
+export const insertCourseSchema = createInsertSchema(courses).pick({
+  title: true,
+  description: true,
+  coverImage: true,
+  published: true,
+});
+
+export const insertCourseSectionSchema = createInsertSchema(courseSections).pick({
+  courseId: true,
+  title: true,
+  order: true,
+});
+
+export const insertCourseBlockSchema = createInsertSchema(courseBlocks).pick({
+  sectionId: true,
+  type: true,
+  content: true,
+  order: true,
+  metadata: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -383,6 +443,15 @@ export type InsertBookmark = z.infer<typeof insertBookmarkSchema>;
 
 export type MediaFile = typeof mediaFiles.$inferSelect;
 export type InsertMediaFile = z.infer<typeof insertMediaFileSchema>;
+
+export type Course = typeof courses.$inferSelect;
+export type CourseSection = typeof courseSections.$inferSelect;
+export type CourseBlock = typeof courseBlocks.$inferSelect;
+export type CourseEnrollment = typeof courseEnrollments.$inferSelect;
+
+export type InsertCourse = z.infer<typeof insertCourseSchema>;
+export type InsertCourseSection = z.infer<typeof insertCourseSectionSchema>;
+export type InsertCourseBlock = z.infer<typeof insertCourseBlockSchema>;
 
 export type BadgeDisplay = {
   name: string;

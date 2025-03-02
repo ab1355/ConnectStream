@@ -19,6 +19,7 @@ import { ProtectedRoute } from "./lib/protected-route";
 import CustomSlugPage from "@/pages/custom-slug-page";
 import EmailSettingsPage from "@/pages/settings/email-settings-page";
 import ThemeSettingsPage from "@/pages/settings/theme-settings-page";
+import CreateCoursePage from "@/pages/courses/create";
 
 function Router() {
   return (
@@ -31,6 +32,7 @@ function Router() {
       <ProtectedRoute path="/leaderboard" component={LeaderboardPage} />
       <ProtectedRoute path="/discussions" component={DiscussionsPage} />
       <ProtectedRoute path="/courses" component={CoursesPage} />
+      <ProtectedRoute path="/courses/create" component={CreateCoursePage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/bookmarks" component={BookmarksPage} />
       <ProtectedRoute path="/custom-slug" component={CustomSlugPage} />
