@@ -927,7 +927,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .where(eq(users.id, req.user.id))
         .returning();
 
-      //      // For demo purposes,      //      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
+      //      //      // For demo purposes,      //      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
 
       res.json(updatedUser);
     } catch (error) {
@@ -1503,54 +1503,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   const httpServer = createServer(app);
 
-  // WebSocket Server Setup
+  // WebSocket Server Setup with proper path
   const wss = new WebSocketServer({
     server: httpServer,
-    path: '/api/ws',
-    verifyClient: (info, cb) => {
-      const clientUrl = new URL(info.req.url!, `http://${info.req.headers.host}`);
-
-      // Log connection attempts for debugging
-      console.log('WebSocket connection attempt:', {
-        origin: info.origin,
-        secure: info.secure,
-        url: info.req.url,
-        host: info.req.headers.host,
-        path: clientUrl.pathname,
-        query: clientUrl.search
-      });
-
-      // Accept all connections for now
-      cb(true);
-    }
+    path: '/api/ws'
   });
 
-  wss.on('connection', (ws, req) => {
-    console.log('WebSocket client connected', {
-      origin: req.headers.origin,
-      host: req.headers.host,
-      path: req.url
-    });
+  wss.on('connection', (ws: WebSocket) => {
+    console.log('WebSocket client connected');
 
-    ws.on('message', (message) => {
+    ws.on('message', (message: string) => {
       try {
         const data = JSON.parse(message.toString());
-        console.log('Received message:', data);
+        console.log('Received:', data);
+
+        // Echo back for testing
+        ws.send(JSON.stringify({ received: data }));
       } catch (error) {
         console.error('Error processing message:', error);
       }
     });
 
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
-    });
-
     ws.on('close', () => {
       console.log('Client disconnected');
     });
-
-    // Send initial connection success message
-    ws.send(JSON.stringify({ type: 'connection', status: 'connected' }));
   });
 
   return httpServer;

@@ -11,7 +11,16 @@ export function Header() {
 
   return (
     <header className="h-14 border-b px-6 flex items-center justify-between bg-background">
-      <div className="font-semibold text-lg">Community Platform</div>
+      <div className="flex items-center">
+        <img 
+          src="/solospace-logo.png" 
+          alt="SoloSpace" 
+          className="h-8 w-auto mr-2"
+        />
+        <span className="font-semibold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500">
+          SoloSpace
+        </span>
+      </div>
 
       <div className="flex-1 px-4 md:px-8">
         <UniversalSearch />
