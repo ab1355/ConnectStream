@@ -4,7 +4,6 @@ import { CourseGrid } from "@/components/features/courses/course-grid";
 import { CourseFilter } from "@/components/features/courses/course-filter";
 import { ProgressTracker } from "@/components/features/courses/progress-tracker";
 import { LearningPathGenerator } from "@/components/features/courses/learning-path-generator";
-import { CourseImporter } from "@/components/features/courses/course-importer";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Plus } from "lucide-react";
@@ -12,7 +11,6 @@ import { useAuth } from "@/hooks/use-auth";
 
 export default function CoursesPage() {
   const { user } = useAuth();
-  const isAdmin = user?.role === "admin";
 
   return (
     <div className="min-h-screen bg-background">
@@ -44,12 +42,6 @@ export default function CoursesPage() {
                 <CourseFilter />
               </div>
             </div>
-
-            {isAdmin && (
-              <div className="mb-8">
-                <CourseImporter />
-              </div>
-            )}
 
             <CourseGrid />
           </div>

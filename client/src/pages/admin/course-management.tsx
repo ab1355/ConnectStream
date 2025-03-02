@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { RoleVisibility } from "@/components/features/admin/role-visibility";
 import { AICourseBuilder } from "@/components/features/admin/ai-course-builder";
+import { CourseImporter } from "@/components/features/courses/course-importer";
 
 export default function CourseManagementPage() {
   const { user } = useAuth();
@@ -83,14 +84,18 @@ export default function CourseManagementPage() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div>
+          <h2 className="text-xl font-semibold mb-4">Course Import</h2>
+          <CourseImporter />
+        </div>
+        <div>
           <h2 className="text-xl font-semibold mb-4">AI Course Generation</h2>
           <AICourseBuilder />
         </div>
+      </div>
 
-        <div>
-          <h2 className="text-xl font-semibold mb-4">Role Management</h2>
-          <RoleVisibility />
-        </div>
+      <div className="mt-8">
+        <h2 className="text-xl font-semibold mb-4">Role Management</h2>
+        <RoleVisibility />
       </div>
 
       <Card className="mt-8">
