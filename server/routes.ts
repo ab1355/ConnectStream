@@ -926,8 +926,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         })        .where(eq(users.id, req.user.id))
         .returning();
 
-      //      // For demo purposes, we'll just log what would be sent in the digest
-      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
+      //      // For demo purposes, we'll just log what would be sent in the digest      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
 
       res.json(updatedUser);
     } catch (error) {
@@ -1275,6 +1274,57 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching role stats:", error);
       res.status(500).json({ error: "Failed to fetch role stats" });
+    }
+  });
+
+  // Add this after the existing course routes
+  app.post("/api/admin/courses/generate", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      const { topic, description } = req.body;
+
+      if (!topic || !description) {
+        return res.status(400).json({ error: "Topic and description are required" });
+      }
+
+      // TODO: Integrate with actual AI service
+      // For now, create a basic course structure
+      const [course] = await db.insert(courses)
+        .values({
+          title: topic,
+          description: description,
+          authorId: req.user.id,
+          published: false,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      // Create default sections
+      const sections = [
+        "Introduction",
+        "Core Concepts",
+        "Practical Applications",
+        "Advanced Topics",
+        "Summary and Next Steps"
+      ];
+
+      for (let i = 0; i < sections.length; i++) {
+        await db.insert(courseSections)
+          .values({
+            courseId: course.id,
+            title: sections[i],
+            order: i + 1,
+            createdAt: new Date()
+          });
+      }
+
+      res.status(201).json(course);
+    } catch (error) {
+      console.error("Error generating course:", error);
+      res.status(500).json({ error: "Failed to generate course" });
     }
   });
 
