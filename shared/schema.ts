@@ -540,3 +540,62 @@ export const insertLessonProgressSchema = createInsertSchema(lessonProgress).pic
 // Add types
 export type LessonProgress = typeof lessonProgress.$inferSelect;
 export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
+
+
+// Add these new schema definitions after the existing ones
+
+export const learningPaths = pgTable("learning_paths", {
+  id: serial("id").primaryKey(),
+  userId: serial("user_id").references(() => users.id),
+  title: text("title").notNull(),
+  description: text("description"),
+  difficulty: text("difficulty").notNull(), // 'beginner', 'intermediate', 'advanced'
+  estimatedHours: integer("estimated_hours"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const learningPathCourses = pgTable("learning_path_courses", {
+  id: serial("id").primaryKey(),
+  pathId: serial("path_id").references(() => learningPaths.id),
+  courseId: serial("course_id").references(() => courses.id),
+  order: integer("order").notNull(),
+  isRequired: boolean("is_required").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const learningPathProgress = pgTable("learning_path_progress", {
+  id: serial("id").primaryKey(),
+  pathId: serial("path_id").references(() => learningPaths.id),
+  userId: serial("user_id").references(() => users.id),
+  currentCourseId: serial("current_course_id").references(() => courses.id),
+  progressPercentage: integer("progress_percentage").default(0),
+  startedAt: timestamp("started_at").defaultNow(),
+  completedAt: timestamp("completed_at"),
+  lastAccessedAt: timestamp("last_accessed_at").defaultNow(),
+});
+
+// Add insert schemas
+export const insertLearningPathSchema = createInsertSchema(learningPaths).pick({
+  title: true,
+  description: true,
+  difficulty: true,
+  estimatedHours: true,
+  isActive: true,
+});
+
+export const insertLearningPathCourseSchema = createInsertSchema(learningPathCourses).pick({
+  pathId: true,
+  courseId: true,
+  order: true,
+  isRequired: true,
+});
+
+// Add types
+export type LearningPath = typeof learningPaths.$inferSelect;
+export type LearningPathCourse = typeof learningPathCourses.$inferSelect;
+export type LearningPathProgress = typeof learningPathProgress.$inferSelect;
+
+export type InsertLearningPath = z.infer<typeof insertLearningPathSchema>;
+export type InsertLearningPathCourse = z.infer<typeof insertLearningPathCourseSchema>;

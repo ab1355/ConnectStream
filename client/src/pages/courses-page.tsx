@@ -3,6 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { CourseGrid } from "@/components/features/courses/course-grid";
 import { CourseFilter } from "@/components/features/courses/course-filter";
 import { ProgressTracker } from "@/components/features/courses/progress-tracker";
+import { LearningPathGenerator } from "@/components/features/courses/learning-path-generator";
 import { Button } from "@/components/ui/button";
 import { Link } from "wouter";
 import { Plus } from "lucide-react";
@@ -27,7 +28,18 @@ export default function CoursesPage() {
                 </Link>
               </div>
             </div>
-            <CourseFilter />
+
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Learning Path</h2>
+                <LearningPathGenerator />
+              </div>
+              <div>
+                <h2 className="text-xl font-semibold mb-4">Course Filter</h2>
+                <CourseFilter />
+              </div>
+            </div>
+
             <CourseGrid />
           </div>
         </main>

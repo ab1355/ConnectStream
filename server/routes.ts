@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments } from "@shared/schema"; // Added import for users table and bookmarks table
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments, learningPaths, learningPathCourses, learningPathProgress } from "@shared/schema"; // Added import for users table and bookmarks table
 import { eq, or, and, sql, desc } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
@@ -1325,6 +1325,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating course:", error);
       res.status(500).json({ error: "Failed to generate course" });
+    }
+  });
+
+  // Add this after the existing course routes
+  app.post("/api/learning-paths/generate", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const { title, description, difficulty } = req.body;
+
+      if (!title || !description || !difficulty) {
+        return res.status(400).json({ error: "All fields are required" });
+      }
+
+      // Create the learning path
+      const [learningPath] = await db.insert(learningPaths)
+        .values({
+          userId: req.user.id,
+          title,
+          description,
+          difficulty,
+          estimatedHours: 20, // Default estimate
+          isActive: true,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        })
+        .returning();
+
+      // Get relevant courses based on difficulty
+      const relevantCourses = await db.select()
+        .from(courses)
+        .where(sql`${courses.published} = true`)
+        .limit(5); // Start with 5 courses per path
+
+      // Add courses to the learning path
+      for (let i = 0; i < relevantCourses.length; i++) {
+        await db.insert(learningPathCourses)
+          .values({
+            pathId: learningPath.id,
+            courseId: relevantCourses[i].id,
+            order: i + 1,
+            isRequired: true,
+            createdAt: new Date(),
+          });
+      }
+
+      // Initialize progress tracking
+      await db.insert(learningPathProgress)
+        .values({
+          pathId: learningPath.id,
+          userId: req.user.id,
+          currentCourseId: relevantCourses[0].id,
+          progressPercentage: 0,
+          startedAt: new Date(),
+          lastAccessedAt: new Date(),
+        });
+
+      res.status(201).json(learningPath);
+    } catch (error) {
+      console.error("Error generating learning path:", error);
+      res.status(500).json({ error: "Failed to generate learning path" });
+    }
+  });
+
+  // Add endpoint to get user's learning paths
+  app.get("/api/learning-paths", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const userPaths = await db.select({
+        id: learningPaths.id,
+        title: learningPaths.title,
+        description: learningPaths.description,
+        difficulty: learningPaths.difficulty,
+        estimatedHours: learningPaths.estimatedHours,
+        isActive: learningPaths.isActive,
+        progress: learningPathProgress.progressPercentage,
+        currentCourse: {
+          id: courses.id,
+          title: courses.title,
+        },
+      })
+        .from(learningPaths)
+        .leftJoin(
+          learningPathProgress,
+          and(
+            eq(learningPaths.id, learningPathProgress.pathId),
+            eq(learningPathProgress.userId, req.user.id)
+          )
+        )
+        .leftJoin(
+          courses,
+          eq(learningPathProgress.currentCourseId, courses.id)
+        )
+        .where(eq(learningPaths.userId, req.user.id))
+        .orderBy(desc(learningPaths.createdAt));
+
+      res.json(userPaths);
+    } catch (error) {
+      console.error("Error fetching learning paths:", error);
+      res.status(500).json({ error: "Failed to fetch learning paths" });
     }
   });
 
