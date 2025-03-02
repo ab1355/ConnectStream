@@ -1265,6 +1265,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this endpoint after the existing admin endpoints
+  app.get("/api/admin/role-stats", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      // Get role distribution
+      const distribution = await db.select({
+        role: users.role,
+        count: sql<number>`count(*)`,
+      })
+        .from(users)
+        .groupBy(users.role)
+        .orderBy(users.role);
+
+      // Count pending approvals
+      const [pendingApprovals] = await db.select({
+        count: sql<number>`count(*)`
+      })
+        .from(users)
+        .where(eq(users.status, "pending"));
+
+      res.json({
+        distribution,
+        pendingApprovals: pendingApprovals.count
+      });
+    } catch (error) {
+      console.error("Error fetching role stats:", error);
+      res.status(500).json({ error: "Failed to fetch role stats" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup

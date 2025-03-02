@@ -5,6 +5,7 @@ import { Progress } from "@/components/ui/progress";
 import { DataTable } from "@/components/ui/data-table";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
+import { RoleVisibility } from "@/components/features/admin/role-visibility";
 
 export default function CourseManagementPage() {
   const { user } = useAuth();
@@ -37,7 +38,7 @@ export default function CourseManagementPage() {
   return (
     <div className="container py-8">
       <h1 className="text-2xl font-bold mb-6">Course Management Dashboard</h1>
-      
+
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
         <Card>
           <CardHeader>
@@ -72,12 +73,16 @@ export default function CourseManagementPage() {
           </CardHeader>
           <CardContent>
             <p className="text-3xl font-bold">{enrollments?.averageCompletionRate || 0}%</p>
-            <Progress 
-              value={enrollments?.averageCompletionRate || 0} 
+            <Progress
+              value={enrollments?.averageCompletionRate || 0}
               className="mt-2"
             />
           </CardContent>
         </Card>
+      </div>
+
+      <div className="mt-8">
+        <RoleVisibility />
       </div>
 
       <Card>
