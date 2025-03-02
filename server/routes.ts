@@ -936,24 +936,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Add AI recommendations endpoint
-  app.get("/api/recommendations/posts", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) return res.sendStatus(401);
-
-      // Import the service
-      const { aiRecommendationService } = await import('./services/ai-recommendation');
-
-      // Get recommendations
-      const recommendations = await aiRecommendationService.getPostRecommendations(req.user.id);
-
-      res.json(recommendations);
-    } catch (error) {
-      console.error("Error getting recommendations:", error);
-      res.status(500).json({ error: "Failed to get recommendations" });
-    }
-  });
-
   // Add this endpoint after the email preferences endpoint
   app.patch("/api/user/theme", async (req, res) => {
     try {
@@ -1301,12 +1283,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // WebSocket Server Setup
   const wss = new WebSocketServer({ 
     server: httpServer,
-    path: '/api/ws', // Changed path to avoid conflict with Vite
-    clientTracking: true
+    path: '/api/ws', // Make sure path matches client configuration
+    clientTracking: true,
+    perMessageDeflate: false // Disable per-message deflate to reduce latency
   });
 
   wss.on('connection', (ws, req) => {
-    console.log('WebSocket client connected');
+    console.log('WebSocket client connected', {
+      origin: req.headers.origin,
+      host: req.headers.host,
+      path: req.url
+    });
 
     ws.on('message', (message) => {
       try {

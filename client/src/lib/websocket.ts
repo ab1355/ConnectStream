@@ -3,9 +3,12 @@ const MAX_RECONNECT_ATTEMPTS = 5;
 const RECONNECT_DELAY = 1000;
 
 export function createWebSocket() {
-  // Use the current host from the browser
+  // Get the WebSocket URL using the VITE_DEV_SERVER_URL environment variable in development
   const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-  const wsUrl = `${wsProtocol}//${window.location.host}/api/ws`;
+  const wsHost = import.meta.env.DEV 
+    ? new URL(import.meta.env.VITE_DEV_SERVER_URL).host 
+    : window.location.host;
+  const wsUrl = `${wsProtocol}//${wsHost}/api/ws`;
 
   console.log('Attempting WebSocket connection to:', wsUrl); // Debug log
 

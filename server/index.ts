@@ -47,31 +47,33 @@ app.use((req, res, next) => {
     throw err;
   });
 
-  // importantly only setup vite in development and after
-  // setting up all the other routes so the catch-all route
-  // doesn't interfere with the other routes
+  // Set up Vite in development mode before starting the server
   if (app.get("env") === "development") {
     await setupVite(app, server);
   } else {
     serveStatic(app);
   }
 
-  // Try to serve the app on port 5000, but use another port if it's not available
+  // Use REPLIT_DOMAIN for host if available, otherwise use 0.0.0.0
+  const host = process.env.REPLIT_DOMAIN || "0.0.0.0";
   const port = process.env.PORT ? parseInt(process.env.PORT) : 5000;
-  
+
   const startServer = (attemptPort: number, maxAttempts = 10) => {
     if (maxAttempts <= 0) {
       log(`Failed to find an available port after multiple attempts`);
       process.exit(1);
       return;
     }
-    
+
     server.listen({
       port: attemptPort,
-      host: "0.0.0.0",
+      host,
       reusePort: true,
     }, () => {
-      log(`serving on port ${attemptPort}`);
+      // Log the full server URL for debugging
+      const protocol = process.env.NODE_ENV === 'production' ? 'https' : 'http';
+      log(`Server running at ${protocol}://${host}:${attemptPort}`);
+      log(`WebSocket server available at ${protocol === 'https' ? 'wss' : 'ws'}://${host}:${attemptPort}/api/ws`);
     }).on('error', (err: any) => {
       if (err.code === 'EADDRINUSE') {
         const nextPort = attemptPort + 1;
@@ -83,6 +85,6 @@ app.use((req, res, next) => {
       }
     });
   };
-  
+
   startServer(port);
 })();
