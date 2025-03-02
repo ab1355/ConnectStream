@@ -3,54 +3,37 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Users } from "lucide-react";
+import type { Course } from "@shared/schema";
 
 interface CourseCardProps {
-  title: string;
-  description: string;
-  category: string;
-  level: string;
-  duration: string;
-  enrolledCount: number;
+  course: Course;
   progress?: number;
-  imageUrl: string;
 }
 
-export function CourseCard({
-  title,
-  description,
-  category,
-  level,
-  duration,
-  enrolledCount,
-  progress,
-  imageUrl
-}: CourseCardProps) {
+export function CourseCard({ course, progress }: CourseCardProps) {
   return (
     <Card className="overflow-hidden">
       <div className="aspect-video relative">
         <img 
-          src={imageUrl} 
-          alt={title}
+          src={course.coverImage || 'https://via.placeholder.com/800x400?text=No+Cover+Image'} 
+          alt={course.title}
           className="object-cover w-full h-full"
         />
       </div>
       <CardHeader className="space-y-2">
         <div className="flex items-center gap-2">
-          <Badge>{category}</Badge>
-          <Badge variant="outline">{level}</Badge>
+          <Badge variant="outline">{course.published ? 'Published' : 'Draft'}</Badge>
         </div>
-        <h3 className="font-semibold text-lg">{title}</h3>
+        <h3 className="font-semibold text-lg">{course.title}</h3>
       </CardHeader>
       <CardContent className="space-y-4">
-        <p className="text-muted-foreground text-sm line-clamp-2">{description}</p>
+        <p className="text-muted-foreground text-sm line-clamp-2">
+          {course.description || 'No description available'}
+        </p>
         <div className="flex items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center">
             <Clock className="h-4 w-4 mr-1" />
-            {duration}
-          </div>
-          <div className="flex items-center">
-            <Users className="h-4 w-4 mr-1" />
-            {enrolledCount} enrolled
+            Created {new Date(course.createdAt).toLocaleDateString()}
           </div>
         </div>
         {progress !== undefined && (
@@ -62,7 +45,7 @@ export function CourseCard({
       </CardContent>
       <CardFooter>
         <Button className="w-full">
-          {progress !== undefined ? "Continue Learning" : "Enroll Now"}
+          {progress !== undefined ? "Continue Learning" : "View Course"}
         </Button>
       </CardFooter>
     </Card>

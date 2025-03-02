@@ -1,9 +1,10 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import { useToast } from "@/hooks/use-toast";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import type { InsertCourse, InsertCourseSection, InsertCourseBlock, insertCourseSchema } from "@shared/schema";
+import { z } from "zod";
+import type { InsertCourse, InsertCourseSection, InsertCourseBlock } from "@shared/schema";
 
 import {
   Form,
@@ -20,6 +21,14 @@ import { Card } from "@/components/ui/card";
 import { Plus, Trash2, GripVertical } from "lucide-react";
 import { FileUpload } from "@/components/ui/file-upload";
 import { useState } from "react";
+
+// Define the schema here since we can't import it directly
+const courseSchema = z.object({
+  title: z.string().min(1, "Title is required"),
+  description: z.string().optional(),
+  coverImage: z.string().optional(),
+  published: z.boolean().default(false),
+});
 
 interface CourseEditorProps {
   courseId?: number;
@@ -39,23 +48,13 @@ export function CourseEditor({ courseId }: CourseEditorProps) {
   }>>([]);
 
   const form = useForm<InsertCourse>({
-    resolver: zodResolver(insertCourseSchema),
+    resolver: zodResolver(courseSchema),
     defaultValues: {
       title: "",
       description: "",
       coverImage: "",
       published: false,
     },
-  });
-
-  const { data: course } = useQuery({
-    queryKey: ["/api/courses", courseId],
-    queryFn: async () => {
-      if (!courseId) return null;
-      const res = await fetch(`/api/courses/${courseId}`);
-      return res.json();
-    },
-    enabled: !!courseId,
   });
 
   const createCourseMutation = useMutation({

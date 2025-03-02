@@ -1,43 +1,33 @@
+import { useQuery } from "@tanstack/react-query";
 import { CourseCard } from "./course-card";
-
-// Sample data - this would typically come from an API
-const courses = [
-  {
-    title: "Introduction to Web Development",
-    description: "Learn the fundamentals of web development including HTML, CSS, and JavaScript.",
-    category: "Programming",
-    level: "Beginner",
-    duration: "8 weeks",
-    enrolledCount: 1234,
-    progress: 75,
-    imageUrl: "https://picsum.photos/seed/course1/800/400"
-  },
-  {
-    title: "UI/UX Design Principles",
-    description: "Master the principles of user interface and user experience design.",
-    category: "Design",
-    level: "Intermediate",
-    duration: "6 weeks",
-    enrolledCount: 856,
-    imageUrl: "https://picsum.photos/seed/course2/800/400"
-  },
-  {
-    title: "Advanced React Patterns",
-    description: "Deep dive into advanced React patterns and best practices.",
-    category: "Programming",
-    level: "Advanced",
-    duration: "10 weeks",
-    enrolledCount: 567,
-    progress: 25,
-    imageUrl: "https://picsum.photos/seed/course3/800/400"
-  }
-];
+import { Course } from "@shared/schema";
+import { Loader2 } from "lucide-react";
 
 export function CourseGrid() {
+  const { data: courses, isLoading } = useQuery<Course[]>({
+    queryKey: ["/api/courses"],
+  });
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="w-8 h-8 animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  if (!courses?.length) {
+    return (
+      <div className="text-center py-12">
+        <p className="text-lg text-muted-foreground">No courses found</p>
+      </div>
+    );
+  }
+
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-      {courses.map((course, index) => (
-        <CourseCard key={index} {...course} />
+      {courses.map((course) => (
+        <CourseCard key={course.id} course={course} />
       ))}
     </div>
   );
