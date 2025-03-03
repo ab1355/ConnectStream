@@ -6,7 +6,7 @@ import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments, learningPaths, learningPathCourses, learningPathProgress } from "@shared/schema"; // Added import for users table and bookmarks table
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments, learningPaths, learningPathCourses, learningPathProgress, roles, rolePermissions } from "@shared/schema"; // Added import for users table and bookmarks table and roles and rolePermissions
 import { eq, or, and, sql, desc } from "drizzle-orm";
 import { insertSpaceSchema } from "@shared/schema"; // Import the schema
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
@@ -1498,6 +1498,108 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching learning paths:", error);
       res.status(500).json({ error: "Failed to fetch learning paths" });
+    }
+  });
+
+  // Add these routes after the existing role-related routes
+
+  // Role Management Routes
+  app.get("/api/admin/roles", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      const roles = await db.select().from(roles)
+        .orderBy(roles.name);
+
+      res.json(roles);
+    } catch (error) {
+      console.error("Error fetching roles:", error);
+      res.status(500).json({ error: "Failed to fetch roles" });
+    }
+  });
+
+  app.post("/api/admin/roles", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      const roleSchema = z.object({
+        name: z.string().min(1),
+        description: z.string()
+      });
+
+      const validation = roleSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [role] = await db.insert(roles)
+        .values({
+          ...validation.data,
+          createdAt: new Date()
+        })
+        .returning();
+
+      res.status(201).json(role);
+    } catch (error) {
+      console.error("Error creating role:", error);
+      res.status(500).json({ error: "Failed to create role" });
+    }
+  });
+
+  app.get("/api/admin/permissions/:roleId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      const rolePermissions = await db.select()
+        .from(rolePermissions)
+        .where(eq(rolePermissions.roleId, parseInt(req.params.roleId)));
+
+      res.json(rolePermissions);
+    } catch (error) {
+      console.error("Error fetching permissions:", error);
+      res.status(500).json({ error: "Failed to fetch permissions" });
+    }
+  });
+
+  app.patch("/api/admin/roles/:roleId/permissions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      const schema = z.object({
+        permissions: z.array(z.string())
+      });
+
+      const validation = schema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const roleId = parseInt(req.params.roleId);
+
+      // First remove all existing permissions
+      await db.delete(rolePermissions)
+        .where(eq(rolePermissions.roleId, roleId));
+
+      // Then add the new permissions
+      if (validation.data.permissions.length > 0) {
+        await db.insert(rolePermissions)
+          .values(
+            validation.data.permissions.map(permissionId => ({
+              roleId,
+              permissionId,
+              grantedAt: new Date()
+            }))
+          );
+      }
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error updating permissions:", error);
+      res.status(500).json({ error: "Failed to update permissions" });
     }
   });
 

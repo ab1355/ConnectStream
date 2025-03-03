@@ -1,7 +1,7 @@
 import { pgTable, text, serial, timestamp, boolean, integer } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
+import { relations, type InferModel } from "drizzle-orm";
 import { z } from "zod";
-import type { relations } from "drizzle-orm";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -15,14 +15,22 @@ export const users = pgTable("users", {
   emailVerified: boolean("email_verified").default(false),
   emailDigestEnabled: boolean("email_digest_enabled").default(true),
   emailDigestFrequency: text("email_digest_frequency").default("daily"),
-  themePreference: text("theme_preference").default("system"), // 'light', 'dark', 'system'
-  themeColor: text("theme_color").default("blue"), // primary color
-  themeRadius: text("theme_radius").default("0.5"), // border radius
-  themeVariant: text("theme_variant").default("professional"), // 'professional', 'tint', 'vibrant'
+  themePreference: text("theme_preference").default("system"),
+  themeColor: text("theme_color").default("blue"),
+  themeRadius: text("theme_radius").default("0.5"),
+  themeVariant: text("theme_variant").default("professional"),
   approvedAt: timestamp("approved_at"),
   approvedBy: serial("approved_by").references((): any => users.id),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const userRelations = relations(users, ({ one }) => ({
+  role: one(roles, {
+    fields: [users.role],
+    references: [roles.name],
+  }),
+}));
+
 
 export const userApprovalNotifications = pgTable("user_approval_notifications", {
   id: serial("id").primaryKey(),
@@ -284,6 +292,20 @@ export const courseEnrollments = pgTable("course_enrollments", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const roles = pgTable("roles", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull().unique(),
+  description: text("description"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const rolePermissions = pgTable("role_permissions", {
+  id: serial("id").primaryKey(),
+  roleId: serial("role_id").references(() => roles.id),
+  permissionId: text("permission_id").notNull(), // Identifier for the permission
+  grantedAt: timestamp("granted_at").defaultNow().notNull(),
+});
+
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -447,6 +469,16 @@ export const insertLessonDiscussionReplySchema = createInsertSchema(lessonDiscus
   parentReplyId: true,
 });
 
+export const insertRoleSchema = createInsertSchema(roles).pick({
+  name: true,
+  description: true,
+});
+
+export const insertRolePermissionSchema = createInsertSchema(rolePermissions).pick({
+  roleId: true,
+  permissionId: true,
+});
+
 export type Thread = typeof threads.$inferSelect;
 export type ThreadReply = typeof threadReplies.$inferSelect;
 export type InsertThread = z.infer<typeof insertThreadSchema>;
@@ -599,3 +631,8 @@ export type LearningPathProgress = typeof learningPathProgress.$inferSelect;
 
 export type InsertLearningPath = z.infer<typeof insertLearningPathSchema>;
 export type InsertLearningPathCourse = z.infer<typeof insertLearningPathCourseSchema>;
+
+export type Role = typeof roles.$inferSelect;
+export type RolePermission = typeof rolePermissions.$inferSelect;
+export type InsertRole = z.infer<typeof insertRoleSchema>;
+export type InsertRolePermission = z.infer<typeof insertRolePermissionSchema>;

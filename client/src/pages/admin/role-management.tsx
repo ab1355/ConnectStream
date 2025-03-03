@@ -1,6 +1,7 @@
 import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { RoleVisibility } from "@/components/features/admin/role-visibility";
+import { PermissionManager } from "@/components/features/admin/permission-manager";
 import { useAuth } from "@/hooks/use-auth";
 import { Loader2 } from "lucide-react";
 
@@ -25,8 +26,9 @@ export default function RoleManagementPage() {
       <div className="flex">
         <Sidebar />
         <main className="flex-1 p-6">
-          <div className="max-w-7xl mx-auto">
-            <h1 className="text-2xl font-bold mb-6">Role Management</h1>
+          <div className="max-w-7xl mx-auto space-y-6">
+            <h1 className="text-2xl font-bold">Role & Permission Management</h1>
+            <PermissionManager />
             <RoleVisibility />
           </div>
         </main>
