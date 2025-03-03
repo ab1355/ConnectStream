@@ -229,7 +229,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get("/api/spaces", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
-      const spacesList = await db.select().from(spaces)
+
+      const spacesList = await db.select({
+        id: spaces.id,
+        name: spaces.name,
+        description: spaces.description,
+        privacy: spaces.privacy,
+        ownerId: spaces.ownerId,
+        createdAt: spaces.createdAt,
+        memberCount: sql<number>`count(${spaceMembers.userId})::int`,
+      })
+        .from(spaces)
         .leftJoin(spaceMembers, eq(spaces.id, spaceMembers.spaceId))
         .where(
           or(
@@ -243,6 +253,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
             )
           )
         )
+        .groupBy(spaces.id)
         .orderBy(spaces.createdAt);
 
       res.json(spacesList);

@@ -1,7 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
-import { Space } from "@shared/schema";
 import { SpaceCard } from "./space-card";
-import { Loader2 } from "lucide-react";
+import { Space } from "@shared/schema";
+import { LoadingScreen } from "@/components/ui/loading-screen";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export function SpaceGrid() {
   const { data: spaces, isLoading, error } = useQuery<Space[]>({
@@ -10,17 +12,21 @@ export function SpaceGrid() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center p-8">
-        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-      </div>
+      <LoadingScreen 
+        variant="inline" 
+        message="Loading spaces..." 
+      />
     );
   }
 
   if (error) {
     return (
-      <div className="text-center text-destructive p-8">
-        Error loading spaces. Please try again.
-      </div>
+      <Alert variant="destructive" className="mb-6">
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription>
+          Error loading spaces. Please try again later.
+        </AlertDescription>
+      </Alert>
     );
   }
 
@@ -40,7 +46,7 @@ export function SpaceGrid() {
           name={space.name}
           description={space.description || ""}
           privacy={space.privacy as "public" | "private" | "secret"}
-          memberCount={0} // TODO: Implement member count
+          memberCount={space.memberCount || 0}
           imageUrl={`https://picsum.photos/seed/${space.id}/800/400`}
         />
       ))}
