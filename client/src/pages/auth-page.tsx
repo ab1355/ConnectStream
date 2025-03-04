@@ -28,6 +28,19 @@ export default function AuthPage() {
     <div className="min-h-screen flex">
       <div className="flex-1 flex items-center justify-center p-8">
         <Card className="w-full max-w-md p-6">
+          <div className="flex justify-center mb-8">
+            <div className="flex items-center">
+              <img 
+                src="/solospace-logo.png" 
+                alt="SoloSpace" 
+                className="h-12 w-auto mr-3"
+              />
+              <span className="font-semibold text-2xl text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-blue-500 to-cyan-500">
+                SoloSpace
+              </span>
+            </div>
+          </div>
+
           <Tabs defaultValue="login">
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="login">Login</TabsTrigger>
