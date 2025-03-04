@@ -574,7 +574,38 @@ export type LessonProgress = typeof lessonProgress.$inferSelect;
 export type InsertLessonProgress = z.infer<typeof insertLessonProgressSchema>;
 
 
-// Add these new schema definitions after the existing ones
+// Add these table definitions after the existing ones
+export const tasks = pgTable("tasks", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  status: text("status").default("pending").notNull(), // 'pending', 'completed'
+  priority: text("priority").default("medium").notNull(), // 'low', 'medium', 'high'
+  dueDate: timestamp("due_date"),
+  userId: serial("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const taskRelations = relations(tasks, ({ one }) => ({
+  user: one(users, {
+    fields: [tasks.userId],
+    references: [users.id],
+  }),
+}));
+
+// Add insert schema
+export const insertTaskSchema = createInsertSchema(tasks).pick({
+  title: true,
+  description: true,
+  status: true,
+  priority: true,
+  dueDate: true,
+});
+
+// Add types
+export type Task = typeof tasks.$inferSelect;
+export type InsertTask = z.infer<typeof insertTaskSchema>;
 
 export const learningPaths = pgTable("learning_paths", {
   id: serial("id").primaryKey(),

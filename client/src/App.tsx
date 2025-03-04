@@ -17,6 +17,7 @@ import UserApprovalsPage from "@/pages/admin/user-approvals";
 import CourseManagementPage from "@/pages/admin/course-management";
 import RoleManagementPage from "@/pages/admin/role-management";
 import BookmarksPage from "@/pages/bookmarks-page";
+import TasksPage from "@/pages/tasks-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import CustomSlugPage from "@/pages/custom-slug-page";
 import EmailSettingsPage from "@/pages/settings/email-settings-page";
@@ -39,6 +40,7 @@ function Router() {
       <ProtectedRoute path="/courses/lessons/:lessonId" component={LessonPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/bookmarks" component={BookmarksPage} />
+      <ProtectedRoute path="/tasks" component={TasksPage} />
       <ProtectedRoute path="/custom-slug" component={CustomSlugPage} />
       <ProtectedRoute path="/settings/email" component={EmailSettingsPage} />
       <ProtectedRoute path="/settings/theme" component={ThemeSettingsPage} />
