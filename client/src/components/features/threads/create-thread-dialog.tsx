@@ -78,8 +78,8 @@ export function CreateThreadDialog() {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button>
+      <DialogTrigger>
+        <Button variant="default">
           <Plus className="h-4 w-4 mr-2" />
           Create Thread
         </Button>
