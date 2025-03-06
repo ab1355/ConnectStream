@@ -924,7 +924,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: z.string().email(),
       });
 
-      const validation = schema.safeParse(req.body);
+const validation = schema.safeParse(req.body);
       if (!validation.success) {
         return res.status(400).json(validation.error);
       }
@@ -1693,26 +1693,60 @@ export async function registerRoutes(app: Express): Promise<Server> {
     path: '/api/ws'
   });
 
-  wss.on('connection', (ws: WebSocket) => {
-    console.log('WebSocket client connected');
+  // Store connected clients
+  const clients = new Map<number, WebSocket>();
 
-    ws.on('message', (message: string) => {
-      try {
-        const data = JSON.parse(message.toString());
-        console.log('Received:', data);
+  wss.on('connection', (ws, req) => {
+    if (!req.session?.passport?.user) {
+      ws.close();
+      return;
+    }
 
-        // Echo back for testing
-        ws.send(JSON.stringify({ received: data }));
-      } catch (error) {
-        console.error('Error processing message:', error);
-      }
-    });
+    const userId = req.session.passport.user;
+    clients.set(userId, ws);
 
     ws.on('close', () => {
-      console.log('Client disconnected');
+      clients.delete(userId);
     });
   });
 
-  return httpServer;
+  // Add broadcast helper to storage for sending notifications
+  storage.broadcastNotification = async (userId: number, notification: any) => {
+    const client = clients.get(userId);
+    if (client?.readyState === WebSocket.OPEN) {
+      client.send(JSON.stringify({
+        type: 'notification',
+        data: notification
+      }));
+    }
+  };
 
+  // Update notification creation to use WebSocket broadcast
+  app.post("/api/notifications", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const validation = insertNotificationSchema.safeParse(req.body);
+      if (!validation.success) {
+        return res.status(400).json(validation.error);
+      }
+
+      const [notification] = await db.insert(notifications)
+        .values({
+          ...validation.data,
+          createdAt: new Date()
+        })
+        .returning();
+
+      // Broadcast to target user if online
+      await storage.broadcastNotification(notification.userId, notification);
+
+      res.status(201).json(notification);
+    } catch (error) {
+      console.error("Error creating notification:", error);
+      res.status(500).json({ error: "Failed to create notification" });
+    }
+  });
+
+  return httpServer;
 }
