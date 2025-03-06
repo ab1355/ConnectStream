@@ -21,12 +21,13 @@ export function useNotifications() {
     if (!user) return;
 
     const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-    const wsUrl = `${protocol}//${window.location.host}/api/ws`;
-    
+    const wsUrl = `${protocol}//${window.location.host}/ws`;
+
+    console.log('Attempting WebSocket connection to:', wsUrl);
     const ws = new WebSocket(wsUrl);
 
     ws.onopen = () => {
-      console.log('WebSocket connected');
+      console.log('WebSocket connected successfully');
     };
 
     ws.onmessage = (event) => {
@@ -47,12 +48,30 @@ export function useNotifications() {
 
     ws.onerror = (error) => {
       console.error('WebSocket error:', error);
+      toast({
+        title: "Connection Error",
+        description: "Failed to establish real-time connection. Some features may be unavailable.",
+        variant: "destructive",
+      });
+    };
+
+    ws.onclose = (event) => {
+      console.log('WebSocket connection closed:', event.code, event.reason);
+      // Attempt to reconnect after 5 seconds if the connection was not closed intentionally
+      if (event.code !== 1000) {
+        setTimeout(() => {
+          console.log('Attempting to reconnect...');
+          setSocket(null); // This will trigger a new connection attempt
+        }, 5000);
+      }
     };
 
     setSocket(ws);
 
     return () => {
-      ws.close();
+      if (ws.readyState === WebSocket.OPEN) {
+        ws.close(1000, 'Component unmounted');
+      }
     };
   }, [user, toast]);
 

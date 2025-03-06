@@ -1794,28 +1794,189 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add this new search endpoint after the other API endpoints
+  app.get("/api/search", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const query = req.query.q as string;
+      if (!query || query.length < 2) {
+        return res.json({
+          users: [],
+          posts: [],
+          spaces: [],
+          courses: [],
+          discussions: []
+        });
+      }
+
+      const searchPattern = `%${query}%`;
+
+      // Search users
+      const users = await db.select({
+        id: users.id,
+        username: users.username,
+        displayName: users.displayName,
+        avatarUrl: users.avatarUrl
+      })
+        .from(users)
+        .where(
+          or(
+            sql`${users.username} ILIKE ${searchPattern}`,
+            sql`${users.displayName} ILIKE ${searchPattern}`
+          )
+        )
+        .limit(5);
+
+      // Search posts
+      const posts = await db.select({
+        id: posts.id,
+        title: posts.title,
+        content: posts.content,
+        authorId: posts.authorId,
+        createdAt: posts.createdAt
+      })
+        .from(posts)
+        .where(
+          or(
+            sql`${posts.title} ILIKE ${searchPattern}`,
+            sql`${posts.content} ILIKE ${searchPattern}`
+          )
+        )
+        .limit(5);
+
+      // Search spaces
+      const spaces = await db.select({
+        id: spaces.id,
+        name: spaces.name,
+        description: spaces.description,
+        privacy: spaces.privacy
+      })
+        .from(spaces)
+        .where(
+          and(
+            or(
+              sql`${spaces.name} ILIKE ${searchPattern}`,
+              sql`${spaces.description} ILIKE ${searchPattern}`
+            ),
+            or(
+              eq(spaces.privacy, "public"),
+              exists(
+                db.select()
+                  .from(spaceMembers)
+                  .where(
+                    and(
+                      eq(spaceMembers.spaceId, spaces.id),
+                      eq(spaceMembers.userId, req.user.id)
+                    )
+                  )
+              )
+            )
+          )
+        )
+        .limit(5);
+
+      // Search courses
+      const courses = await db.select({
+        id: courses.id,
+        title: courses.title,
+        description: courses.description,
+        coverImage: courses.coverImage,
+        authorId: courses.authorId
+      })
+        .from(courses)
+        .where(
+          or(
+            sql`${courses.title} ILIKE ${searchPattern}`,
+            sql`${courses.description} ILIKE ${searchPattern}`
+          )
+        )
+        .limit(5);
+
+      // Search discussions
+      const discussions = await db.select({
+        id: threads.id,
+        title: threads.title,
+        content: threads.content,
+        authorId: threads.authorId
+      })
+        .from(threads)
+        .where(
+          or(
+            sql`${threads.title} ILKE ${searchPattern}`,
+            sql`${threads.content} ILIKE ${searchPattern}`
+          )
+        )
+        .limit(5);
+
+      res.json({
+        users,
+        posts,
+        spaces,
+        courses,
+        discussions
+      });
+    } catch (error) {
+      console.error("Error performing search:", error);
+      res.status(500).json({ error: "Failed to perform search" });
+    }
+  });
+
   const httpServer = createServer(app);
 
   // WebSocket Server Setup with proper path
-  const wss = new WebSocketServer({
-    server: httpServer,
-    path: '/api/ws'
+  const wss = new WebSocketServer({ 
+    server: httpServer, 
+    path: '/ws'
   });
 
-  // Store connected clients
+  // Store connected clients with their session info
   const clients = new Map<number, WebSocket>();
 
-  wss.on('connection', (ws, req) => {
-    if (!req.session?.passport?.user) {
-      ws.close();
-      return;
+  // Handle WebSocket connections
+  wss.on('connection', (ws, request) => {
+    console.log('New WebSocket connection attempt from:', request.headers.host);
+
+    // Get session from request
+    const userId = request.session?.passport?.user;
+    if (userId) {
+      console.log('Authenticated WebSocket connection for user:', userId);
+      clients.set(userId, ws);
+
+      // Send welcome message
+      ws.send(JSON.stringify({
+        type: 'notification',
+        data: {
+          id: Date.now(),
+          title: 'Connected',
+          content: 'Real-time notifications enabled',
+          type: 'success',
+          userId: userId,
+          createdAt: new Date().toISOString(),
+          isRead: false
+        }
+      }));
     }
 
-    const userId = req.session.passport.user;
-    clients.set(userId, ws);
+    ws.on('message', (data) => {
+      try {
+        console.log('Received message:', data.toString());
+        const message = JSON.parse(data.toString());
+        // Handle different message types here
+      } catch (error) {
+        console.error('Error processing WebSocket message:', error);
+      }
+    });
+
+    ws.on('error', (error) => {
+      console.error('WebSocket error:', error);
+    });
 
     ws.on('close', () => {
-      clients.delete(userId);
+      if (userId) {
+        console.log('Client disconnected:', userId);
+        clients.delete(userId);
+      }
     });
   });
 
@@ -1829,33 +1990,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }));
     }
   };
-
-  // Update notification creation to use WebSocket broadcast
-  app.post("/api/notifications", async (req, res) => {
-    try {
-      if (!req.isAuthenticated()) return res.sendStatus(401);
-
-      const validation = insertNotificationSchema.safeParse(req.body);
-      if (!validation.success) {
-        return res.status(400).json(validation.error);
-      }
-
-      const [notification] = await db.insert(notifications)
-        .values({
-          ...validation.data,
-          createdAt: new Date()
-        })
-        .returning();
-
-      // Broadcast to target user if online
-      await storage.broadcastNotification(notification.userId, notification);
-
-      res.status(201).json(notification);
-    } catch (error) {
-      console.error("Error creating notification:", error);
-      res.status(500).json({ error: "Failed to create notification" });
-    }
-  });
 
   return httpServer;
 }
