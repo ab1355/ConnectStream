@@ -36,7 +36,7 @@ export function CreateThreadDialog() {
     defaultValues: {
       title: "",
       content: "",
-      categoryId: 1, // Default category
+      categoryId: 1,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     }
@@ -81,13 +81,14 @@ export function CreateThreadDialog() {
   });
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog modal open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>
+        <Button className="flex items-center">
           <Plus className="h-4 w-4 mr-2" />
           Create Thread
         </Button>
       </DialogTrigger>
+
       <DialogContent>
         <DialogHeader>
           <DialogTitle>Create New Thread</DialogTitle>
@@ -95,6 +96,7 @@ export function CreateThreadDialog() {
             Start a new discussion thread. Use @ to mention users and # for hashtags.
           </DialogDescription>
         </DialogHeader>
+
         <Form {...form}>
           <form onSubmit={handleSubmit} className="space-y-4">
             <FormField
@@ -110,6 +112,7 @@ export function CreateThreadDialog() {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="content"
@@ -128,6 +131,7 @@ export function CreateThreadDialog() {
                 </FormItem>
               )}
             />
+
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel
