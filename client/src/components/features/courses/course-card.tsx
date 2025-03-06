@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card"
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
-import { Clock, Users } from "lucide-react";
+import { Clock } from "lucide-react";
 import type { Course } from "@shared/schema";
 import { useQuery } from "@tanstack/react-query";
 import { Link } from "wouter";
@@ -16,6 +16,9 @@ export function CourseCard({ course }: CourseCardProps) {
     queryKey: ["/api/courses", course.id, "progress"],
     enabled: !!course.id,
   });
+
+  // Find the first incomplete lesson or the first lesson if none are completed
+  const nextLessonUrl = `/courses/${course.id}/lessons/1`; // Default to first lesson
 
   return (
     <Card className="overflow-hidden">
@@ -57,7 +60,7 @@ export function CourseCard({ course }: CourseCardProps) {
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={`/courses/${course.id}`}>
+          <Link href={nextLessonUrl}>
             {progress ? "Continue Learning" : "Start Course"}
           </Link>
         </Button>
