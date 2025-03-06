@@ -5,6 +5,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { insertSpaceSchema, type InsertSpace } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient, apiRequest } from "@/lib/queryClient";
+import { Image as ImageIcon, Upload } from "lucide-react";
 
 import {
   Dialog,
@@ -29,6 +30,7 @@ import { PrivacySelect } from "./privacy-select";
 
 export function CreateSpaceDialog() {
   const [open, setOpen] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string>();
   const { toast } = useToast();
 
   const form = useForm<InsertSpace>({
@@ -37,8 +39,45 @@ export function CreateSpaceDialog() {
       name: "",
       description: "",
       privacy: "public",
+      imageUrl: "",
     },
   });
+
+  const handleImageChange = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast({
+        title: "Invalid file type",
+        description: "Please upload an image file",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append('image', file);
+
+    try {
+      const res = await fetch('/api/upload', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!res.ok) throw new Error('Upload failed');
+
+      const { url } = await res.json();
+      form.setValue('imageUrl', url);
+      setImagePreview(URL.createObjectURL(file));
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload image. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
 
   const createSpaceMutation = useMutation({
     mutationFn: async (data: InsertSpace) => {
@@ -49,6 +88,7 @@ export function CreateSpaceDialog() {
       queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
       setOpen(false);
       form.reset();
+      setImagePreview(undefined);
       toast({
         title: "Space created",
         description: "Your new space has been created successfully.",
@@ -77,6 +117,37 @@ export function CreateSpaceDialog() {
         </DialogHeader>
         <Form {...form}>
           <form onSubmit={form.handleSubmit((data) => createSpaceMutation.mutate(data))} className="space-y-4">
+            <div className="space-y-2">
+              <FormLabel>Space Image</FormLabel>
+              <div className="aspect-video bg-muted rounded-lg relative overflow-hidden">
+                {imagePreview ? (
+                  <img 
+                    src={imagePreview} 
+                    alt="Space preview" 
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="flex items-center justify-center w-full h-full">
+                    <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                  <label className="cursor-pointer">
+                    <Input 
+                      type="file" 
+                      accept="image/*"
+                      className="hidden" 
+                      onChange={handleImageChange}
+                    />
+                    <Button type="button" variant="secondary">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Image
+                    </Button>
+                  </label>
+                </div>
+              </div>
+            </div>
+
             <FormField
               control={form.control}
               name="name"
@@ -90,6 +161,7 @@ export function CreateSpaceDialog() {
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="description"
@@ -100,12 +172,14 @@ export function CreateSpaceDialog() {
                     <Textarea
                       placeholder="Describe what this space is about"
                       {...field}
+                      value={field.value || ''}
                     />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="privacy"
@@ -122,6 +196,7 @@ export function CreateSpaceDialog() {
                 </FormItem>
               )}
             />
+
             <div className="flex justify-end gap-2">
               <Button type="button" variant="outline" onClick={() => setOpen(false)}>
                 Cancel

@@ -1,14 +1,14 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Lock, Eye, EyeOff } from "lucide-react";
+import { Users, Lock, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
 
 interface SpaceCardProps {
   name: string;
   description: string;
   memberCount: number;
   privacy: "public" | "private" | "secret";
-  imageUrl: string;
+  imageUrl?: string;
 }
 
 export function SpaceCard({ name, description, memberCount, privacy, imageUrl }: SpaceCardProps) {
@@ -34,12 +34,18 @@ export function SpaceCard({ name, description, memberCount, privacy, imageUrl }:
 
   return (
     <Card className="overflow-hidden">
-      <div className="aspect-video relative">
-        <img 
-          src={imageUrl} 
-          alt={name}
-          className="object-cover w-full h-full"
-        />
+      <div className="aspect-video relative bg-muted">
+        {imageUrl ? (
+          <img 
+            src={imageUrl} 
+            alt={name}
+            className="object-cover w-full h-full"
+          />
+        ) : (
+          <div className="flex items-center justify-center w-full h-full">
+            <ImageIcon className="h-12 w-12 text-muted-foreground/50" />
+          </div>
+        )}
         <Badge
           variant={variant}
           className="absolute top-2 right-2 flex items-center gap-1"

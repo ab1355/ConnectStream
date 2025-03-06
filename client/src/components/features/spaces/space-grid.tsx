@@ -47,7 +47,7 @@ export function SpaceGrid() {
           description={space.description || ""}
           privacy={space.privacy as "public" | "private" | "secret"}
           memberCount={space.memberCount || 0}
-          imageUrl={`https://picsum.photos/seed/${space.id}/800/400`}
+          imageUrl={space.imageUrl}
         />
       ))}
     </div>
