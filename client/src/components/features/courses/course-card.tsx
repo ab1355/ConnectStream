@@ -4,13 +4,19 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Clock, Users } from "lucide-react";
 import type { Course } from "@shared/schema";
+import { useQuery } from "@tanstack/react-query";
+import { Link } from "wouter";
 
 interface CourseCardProps {
   course: Course;
-  progress?: number;
 }
 
-export function CourseCard({ course, progress }: CourseCardProps) {
+export function CourseCard({ course }: CourseCardProps) {
+  const { data: progress } = useQuery({
+    queryKey: ["/api/courses", course.id, "progress"],
+    enabled: !!course.id,
+  });
+
   return (
     <Card className="overflow-hidden">
       <div className="aspect-video relative">
@@ -23,6 +29,9 @@ export function CourseCard({ course, progress }: CourseCardProps) {
       <CardHeader className="space-y-2">
         <div className="flex items-center gap-2">
           <Badge variant="outline">{course.published ? 'Published' : 'Draft'}</Badge>
+          {progress?.percentageComplete === 100 && (
+            <Badge variant="success">Completed</Badge>
+          )}
         </div>
         <h3 className="font-semibold text-lg">{course.title}</h3>
       </CardHeader>
@@ -36,16 +45,21 @@ export function CourseCard({ course, progress }: CourseCardProps) {
             Created {new Date(course.createdAt).toLocaleDateString()}
           </div>
         </div>
-        {progress !== undefined && (
+        {progress && (
           <div className="space-y-1">
-            <Progress value={progress} />
-            <p className="text-sm text-muted-foreground text-right">{progress}% complete</p>
+            <Progress value={progress.percentageComplete} />
+            <div className="flex justify-between text-sm text-muted-foreground">
+              <span>{progress.completedLessons} / {progress.totalLessons} lessons</span>
+              <span>{progress.percentageComplete}% complete</span>
+            </div>
           </div>
         )}
       </CardContent>
       <CardFooter>
-        <Button className="w-full">
-          {progress !== undefined ? "Continue Learning" : "View Course"}
+        <Button asChild className="w-full">
+          <Link href={`/courses/${course.id}`}>
+            {progress ? "Continue Learning" : "Start Course"}
+          </Link>
         </Button>
       </CardFooter>
     </Card>

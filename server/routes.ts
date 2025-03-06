@@ -924,8 +924,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         email: z.string().email(),
       });
 
-const validation = schema.safeParse(req.body);
-      if (!validation.success) {
+      const validation = schema.safeParse(req.body);
+      if(!validation.success) {
         return res.status(400).json(validation.error);
       }
 
@@ -937,8 +937,6 @@ const validation = schema.safeParse(req.body);
         })
         .where(eq(users.id, req.user.id))
         .returning();
-
-      //      //      // For demo purposes,      //      console.log(`Email digest would be sent to ${updatedUser.email} ${updatedUser.emailDigestFrequency}`);
 
       res.json(updatedUser);
     } catch (error) {
@@ -1099,20 +1097,64 @@ const validation = schema.safeParse(req.body);
   });
 
   // Add progress tracking endpoints
-  app.get("/api/courses/:courseId/progress", async (req, res) => {
+  app.post("/api/courses/:courseId/progress", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
 
       const courseId = parseInt(req.params.courseId);
+      const { lessonId, completed } = req.body;
 
-      // Get total lessons in course
-      const totalLessons = await db.select({ count: sql<number>`count(*)` })
+      if (!courseId || !lessonId) {
+        return res.status(400).json({ error: "Missing required parameters" });
+      }
+
+      console.log(`Updating progress for course ${courseId}, lesson ${lessonId}, completed: ${completed}`);
+
+      // First verify the lesson belongs to the course
+      const [lessonExists] = await db.select()
+        .from(lessons)
+        .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
+        .where(
+          and(
+            eq(courseSections.courseId, courseId),
+            eq(lessons.id, lessonId)
+          )
+        );
+
+      if (!lessonExists) {
+        return res.status(404).json({ error: "Lesson not found in this course" });
+      }
+
+      // Update lesson progress
+      const [progress] = await db.insert(lessonProgress)
+        .values({
+          lessonId,
+          userId: req.user.id,
+          completed: completed || false,
+          lastAccessed: new Date(),
+          updatedAt: new Date(),
+        })
+        .onConflictDoUpdate({
+          target: [lessonProgress.lessonId, lessonProgress.userId],
+          set: {
+            completed: completed || false,
+            lastAccessed: new Date(),
+            updatedAt: new Date(),
+          },
+        })
+        .returning();
+
+      // Get course progress statistics
+      const [{ count: totalLessons }] = await db.select({
+        count: sql<number>`count(*)::int`
+      })
         .from(lessons)
         .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
         .where(eq(courseSections.courseId, courseId));
 
-      // Get completed lessons
-      const completedLessons = await db.select({ count: sql<number>`count(*)` })
+      const [{ count: completedLessons }] = await db.select({
+        count: sql<number>`count(*)::int`
+      })
         .from(lessonProgress)
         .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
         .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
@@ -1124,13 +1166,88 @@ const validation = schema.safeParse(req.body);
           )
         );
 
-      const progress = {
-        completedLessons: completedLessons[0].count,
-        totalLessons: totalLessons[0].count,
-        percentageComplete: Math.round((completedLessons[0].count / totalLessons[0].count) * 100)
-      };
+      const progressPercentage = totalLessons > 0
+        ? Math.round((completedLessons / totalLessons) * 100)
+        : 0;
 
-      res.json(progress);
+      // Update course enrollment progress
+      await db.insert(courseEnrollments)
+        .values({
+          courseId,
+          userId: req.user.id,
+          progress: progressPercentage,
+          completedAt: progressPercentage === 100 ? new Date() : null,
+        })
+        .onConflictDoUpdate({
+          target: [courseEnrollments.courseId, courseEnrollments.userId],
+          set: {
+            progress: progressPercentage,
+            completedAt: progressPercentage === 100 ? new Date() : null,
+          },
+        });
+
+      console.log(`Updated course progress: ${progressPercentage}% complete`);
+
+      res.json({
+        lessonProgress: progress,
+        courseProgress: {
+          totalLessons,
+          completedLessons,
+          percentageComplete: progressPercentage
+        }
+      });
+    } catch (error) {
+      console.error("Error updating course progress:", error);
+      res.status(500).json({ error: "Failed to update course progress" });
+    }
+  });
+
+  app.get("/api/courses/:courseId/progress", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+
+      const courseId = parseInt(req.params.courseId);
+      if (!courseId) {
+        return res.status(400).json({ error: "Invalid course ID" });
+      }
+
+      // Verify course exists
+      const [course] = await db.select()
+        .from(courses)
+        .where(eq(courses.id, courseId));
+
+      if (!course) {
+        return res.status(404).json({ error: "Course not found" });
+      }
+
+      const [{ count: totalLessons }] = await db.select({
+        count: sql<number>`count(*)::int`
+      })
+        .from(lessons)
+        .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
+        .where(eq(courseSections.courseId, courseId));
+
+      const [{ count: completedLessons }] = await db.select({
+        count: sql<number>`count(*)::int`
+      })
+        .from(lessonProgress)
+        .innerJoin(lessons, eq(lessonProgress.lessonId, lessons.id))
+        .innerJoin(courseSections, eq(lessons.sectionId, courseSections.id))
+        .where(
+          and(
+            eq(courseSections.courseId, courseId),
+            eq(lessonProgress.userId, req.user.id),
+            eq(lessonProgress.completed, true)
+          )
+        );
+
+      res.json({
+        totalLessons: totalLessons || 0,
+        completedLessons: completedLessons || 0,
+        percentageComplete: totalLessons > 0
+          ? Math.round((completedLessons / totalLessons) * 100)
+          : 0
+      });
     } catch (error) {
       console.error("Error fetching course progress:", error);
       res.status(500).json({ error: "Failed to fetch course progress" });
@@ -1141,31 +1258,23 @@ const validation = schema.safeParse(req.body);
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
 
-      // Get total enrolled courses
-      const totalCourses = await db.select({ count: sql<number>`count(*)` })
+      const enrollments = await db.select()
         .from(courseEnrollments)
         .where(eq(courseEnrollments.userId, req.user.id));
 
-      // Get completed courses
-      const completedCourses = await db.select({ count: sql<number>`count(*)` })
-        .from(courseEnrollments)
-        .where(
-          and(
-            eq(courseEnrollments.userId, req.user.id),
-            sql`${courseEnrollments.completedAt} is not null`
-          )
-        );
+      const totalCourses = enrollments.length;
+      const completedCourses = enrollments.filter(e => e.completedAt).length;
 
-      const progress = {
-        completedCourses: completedCourses[0].count,
-        totalCourses: totalCourses[0].count,
-        percentageComplete: Math.round((completedCourses[0].count / totalCourses[0].count) * 100)
-      };
-
-      res.json(progress);
+      res.json({
+        totalCourses,
+        completedCourses,
+        percentageComplete: totalCourses > 0
+          ? Math.round((completedCourses / totalCourses) * 100)
+          : 0
+      });
     } catch (error) {
-      console.error("Error fetching overall progress:", error);
-      res.status(500).json({ error: "Failed to fetch overall progress" });
+      console.error("Error fetching user course progress:", error);
+      res.status(500).json({ error: "Failed to fetch user course progress" });
     }
   });
 
