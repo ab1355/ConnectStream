@@ -25,6 +25,7 @@ import EmailSettingsPage from "@/pages/settings/email-settings-page";
 import ThemeSettingsPage from "@/pages/settings/theme-settings-page";
 import CreateCoursePage from "@/pages/courses/create";
 import LessonPage from "@/pages/courses/lesson-page";
+import CourseProgressPage from "@/pages/courses/progress-page";
 
 function Router() {
   return (
@@ -38,6 +39,7 @@ function Router() {
       <ProtectedRoute path="/discussions" component={DiscussionsPage} />
       <ProtectedRoute path="/courses" component={CoursesPage} />
       <ProtectedRoute path="/courses/create" component={CreateCoursePage} />
+      <ProtectedRoute path="/courses/progress" component={CourseProgressPage} />
       <ProtectedRoute path="/courses/lessons/:lessonId" component={LessonPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/bookmarks" component={BookmarksPage} />
