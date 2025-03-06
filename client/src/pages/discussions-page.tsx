@@ -3,8 +3,7 @@ import { Sidebar } from "@/components/layout/sidebar";
 import { ThreadList } from "@/components/features/discussions/thread-list";
 import { CategoryNavigation } from "@/components/features/discussions/category-navigation";
 import { SearchDiscussions } from "@/components/features/discussions/search-discussions";
-import { Button } from "@/components/ui/button";
-import { Plus } from "lucide-react";
+import { CreateThreadDialog } from "@/components/features/threads/create-thread-dialog";
 
 export default function DiscussionsPage() {
   return (
@@ -16,10 +15,7 @@ export default function DiscussionsPage() {
           <div className="max-w-7xl mx-auto">
             <div className="flex items-center justify-between mb-6">
               <h1 className="text-2xl font-bold">Discussions</h1>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Create Thread
-              </Button>
+              <CreateThreadDialog />
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
               <CategoryNavigation className="lg:col-span-1" />

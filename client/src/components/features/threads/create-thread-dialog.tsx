@@ -4,7 +4,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { insertThreadSchema, type InsertThread } from "@shared/schema";
 import { useToast } from "@/hooks/use-toast";
-import { queryClient, apiRequest } from "@/lib/queryClient";
+import { queryClient } from "@/lib/queryClient";
 import { MentionsInput } from "@/components/ui/mentions-input";
 
 import {
@@ -25,6 +25,7 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
+import { Plus } from "lucide-react";
 
 export function CreateThreadDialog() {
   const [open, setOpen] = useState(false);
@@ -35,14 +36,27 @@ export function CreateThreadDialog() {
     defaultValues: {
       title: "",
       content: "",
-      spaceId: 1 // TODO: Get from current space context
+      categoryId: 1, // Default category
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
     }
   });
 
   const createThreadMutation = useMutation({
     mutationFn: async (data: InsertThread) => {
-      const res = await apiRequest("POST", "/api/threads", data);
-      return res.json();
+      const response = await fetch("/api/threads", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to create thread");
+      }
+
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/threads"] });
@@ -56,7 +70,7 @@ export function CreateThreadDialog() {
     onError: (error: Error) => {
       toast({
         title: "Error",
-        description: "Failed to create thread. Please try again.",
+        description: error.message,
         variant: "destructive",
       });
     },
@@ -65,7 +79,10 @@ export function CreateThreadDialog() {
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button>Create Thread</Button>
+        <Button>
+          <Plus className="h-4 w-4 mr-2" />
+          Create Thread
+        </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
@@ -112,7 +129,7 @@ export function CreateThreadDialog() {
                 Cancel
               </Button>
               <Button type="submit" disabled={createThreadMutation.isPending}>
-                Create Thread
+                {createThreadMutation.isPending ? "Creating..." : "Create Thread"}
               </Button>
             </div>
           </form>
