@@ -40,7 +40,7 @@ function Router() {
       <ProtectedRoute path="/courses" component={CoursesPage} />
       <ProtectedRoute path="/courses/create" component={CreateCoursePage} />
       <ProtectedRoute path="/courses/progress" component={CourseProgressPage} />
-      <ProtectedRoute path="/courses/lessons/:lessonId" component={LessonPage} />
+      <ProtectedRoute path="/courses/:courseId/lessons/:lessonId" component={LessonPage} />
       <ProtectedRoute path="/messages" component={MessagesPage} />
       <ProtectedRoute path="/bookmarks" component={BookmarksPage} />
       <ProtectedRoute path="/tasks" component={TasksPage} />

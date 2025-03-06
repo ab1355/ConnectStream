@@ -17,8 +17,8 @@ export function CourseCard({ course }: CourseCardProps) {
     enabled: !!course.id,
   });
 
-  // Find the first incomplete lesson or the first lesson if none are completed
-  const nextLessonUrl = `/courses/${course.id}/lessons/1`; // Default to first lesson
+  // Navigate to the first lesson of the course
+  const lessonUrl = `/courses/${course.id}/lessons/1`;
 
   return (
     <Card className="overflow-hidden">
@@ -60,7 +60,7 @@ export function CourseCard({ course }: CourseCardProps) {
       </CardContent>
       <CardFooter>
         <Button asChild className="w-full">
-          <Link href={nextLessonUrl}>
+          <Link href={lessonUrl}>
             {progress ? "Continue Learning" : "Start Course"}
           </Link>
         </Button>
