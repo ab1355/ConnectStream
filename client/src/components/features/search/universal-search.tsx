@@ -10,7 +10,7 @@ import {
   CommandList,
   CommandLoading,
 } from "@/components/ui/command";
-import { User, Post, Space, Course, Discussion } from "@shared/schema";
+import { User, Post, Space, Course, Discussion } from "@shared/schema"; // Kept Discussion type
 import { Search, User as UserIcon, FileText, Layout, BookOpen, MessageSquare } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -22,7 +22,7 @@ interface SearchResult {
   posts: Post[];
   spaces: Space[];
   courses: Course[];
-  discussions: Discussion[];
+  discussions: Discussion[]; // Corrected type
 }
 
 export function UniversalSearch() {
@@ -43,7 +43,7 @@ export function UniversalSearch() {
   }, []);
 
   const { data: searchResults, isLoading } = useQuery<SearchResult>({
-    queryKey: ["/api/search", debouncedSearch],
+    queryKey: ["/api/search", { q: debouncedSearch }], // Updated query key
     enabled: !!debouncedSearch && debouncedSearch.length >= 2,
   });
 
@@ -116,7 +116,7 @@ export function UniversalSearch() {
             <CommandEmpty>Enter at least 2 characters to search...</CommandEmpty>
           )}
 
-          {searchResults?.users.length > 0 && (
+          {searchResults?.users?.length > 0 && (
             <CommandGroup heading="Members">
               {searchResults.users.map((user) => (
                 <CommandItem
@@ -136,7 +136,7 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {searchResults?.posts.length > 0 && (
+          {searchResults?.posts?.length > 0 && (
             <CommandGroup heading="Posts">
               {searchResults.posts.map((post) => (
                 <CommandItem
@@ -150,7 +150,7 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {searchResults?.spaces.length > 0 && (
+          {searchResults?.spaces?.length > 0 && (
             <CommandGroup heading="Spaces">
               {searchResults.spaces.map((space) => (
                 <CommandItem
@@ -164,7 +164,7 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {searchResults?.courses.length > 0 && (
+          {searchResults?.courses?.length > 0 && (
             <CommandGroup heading="Courses">
               {searchResults.courses.map((course) => (
                 <CommandItem
@@ -178,7 +178,7 @@ export function UniversalSearch() {
             </CommandGroup>
           )}
 
-          {searchResults?.discussions.length > 0 && (
+          {searchResults?.discussions?.length > 0 && (
             <CommandGroup heading="Discussions">
               {searchResults.discussions.map((discussion) => (
                 <CommandItem

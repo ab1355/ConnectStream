@@ -1,22 +1,21 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { WebSocketServer, WebSocket } from "ws";
 import { setupAuth } from "./auth";
 import { storage } from "./storage";
 import { insertPostSchema, insertCommentSchema } from "@shared/schema";
 import { insertMessageSchema } from "@shared/schema";
 import { db } from "./db";
-import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments, learningPaths, learningPathCourses, learningPathProgress, roles, rolePermissions, tasks } from "@shared/schema"; // Added import for users table and bookmarks table and roles and rolePermissions
+import { spaces, spaceMembers, users, threads, threadReplies, bookmarks, polls, pollOptions, pollResponses, hashtags, postHashtags, mentions, mediaFiles, posts, courses, courseSections, courseBlocks, lessonDiscussions, lessonDiscussionReplies, lessons, lessonProgress, courseEnrollments, learningPaths, learningPathCourses, learningPathProgress, roles, rolePermissions, tasks } from "@shared/schema"; 
 import { eq, or, and, sql, desc } from "drizzle-orm";
-import { insertSpaceSchema } from "@shared/schema"; // Import the schema
+import { insertSpaceSchema } from "@shared/schema"; 
 import { insertPollSchema, insertPollOptionSchema, insertPollResponseSchema, insertBookmarkSchema, insertCourseSchema, insertCourseSectionSchema, insertCourseBlockSchema } from "@shared/schema";
-import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; //Import thread schemas
+import { insertThreadSchema, insertThreadReplySchema } from '@shared/schema'; 
 import { userScores, achievements, userAchievements } from "@shared/schema";
 import { notifications } from "@shared/schema";
 import { insertNotificationSchema } from "@shared/schema";
 import { customLinks } from "@shared/schema";
-import { insertCustomLinkSchema } from "@shared/schema"; // Import the new schema
-import { z } from "zod"; // Added import for zod
+import { insertCustomLinkSchema } from "@shared/schema"; 
+import { z } from "zod"; 
 import multer from 'multer';
 import { mediaStorageService } from './services/media-storage';
 import path from 'path';
@@ -1903,7 +1902,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         .from(threads)
         .where(
           or(
-            sql`${threads.title} ILKE ${searchPattern}`,
+            sql`${threads.title} ILIKE ${searchPattern}`,
             sql`${threads.content} ILIKE ${searchPattern}`
           )
         )
@@ -1923,73 +1922,5 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   const httpServer = createServer(app);
-
-  // WebSocket Server Setup with proper path
-  const wss = new WebSocketServer({ 
-    server: httpServer, 
-    path: '/ws'
-  });
-
-  // Store connected clients with their session info
-  const clients = new Map<number, WebSocket>();
-
-  // Handle WebSocket connections
-  wss.on('connection', (ws, request) => {
-    console.log('New WebSocket connection attempt from:', request.headers.host);
-
-    // Get session from request
-    const userId = request.session?.passport?.user;
-    if (userId) {
-      console.log('Authenticated WebSocket connection for user:', userId);
-      clients.set(userId, ws);
-
-      // Send welcome message
-      ws.send(JSON.stringify({
-        type: 'notification',
-        data: {
-          id: Date.now(),
-          title: 'Connected',
-          content: 'Real-time notifications enabled',
-          type: 'success',
-          userId: userId,
-          createdAt: new Date().toISOString(),
-          isRead: false
-        }
-      }));
-    }
-
-    ws.on('message', (data) => {
-      try {
-        console.log('Received message:', data.toString());
-        const message = JSON.parse(data.toString());
-        // Handle different message types here
-      } catch (error) {
-        console.error('Error processing WebSocket message:', error);
-      }
-    });
-
-    ws.on('error', (error) => {
-      console.error('WebSocket error:', error);
-    });
-
-    ws.on('close', () => {
-      if (userId) {
-        console.log('Client disconnected:', userId);
-        clients.delete(userId);
-      }
-    });
-  });
-
-  // Add broadcast helper to storage for sending notifications
-  storage.broadcastNotification = async (userId: number, notification: any) => {
-    const client = clients.get(userId);
-    if (client?.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify({
-        type: 'notification',
-        data: notification
-      }));
-    }
-  };
-
   return httpServer;
 }
