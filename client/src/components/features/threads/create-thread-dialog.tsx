@@ -76,10 +76,14 @@ export function CreateThreadDialog() {
     },
   });
 
+  const handleSubmit = form.handleSubmit((data) => {
+    createThreadMutation.mutate(data);
+  });
+
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger>
-        <Button variant="default">
+      <DialogTrigger asChild>
+        <Button>
           <Plus className="h-4 w-4 mr-2" />
           Create Thread
         </Button>
@@ -92,7 +96,7 @@ export function CreateThreadDialog() {
           </DialogDescription>
         </DialogHeader>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit((data) => createThreadMutation.mutate(data))} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="title"
