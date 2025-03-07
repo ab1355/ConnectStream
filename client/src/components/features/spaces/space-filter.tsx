@@ -2,8 +2,13 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { CreateSpaceDialog } from "./create-space-dialog";
 
 export function SpaceFilter() {
+  const { user } = useAuth();
+  const isAdmin = user?.role === "admin";
+
   return (
     <div className="flex flex-col sm:flex-row gap-4 mb-6">
       <div className="relative flex-1">
@@ -22,9 +27,7 @@ export function SpaceFilter() {
             <SelectItem value="business">Business</SelectItem>
           </SelectContent>
         </Select>
-        <Button>
-          Create Space
-        </Button>
+        {isAdmin && <CreateSpaceDialog />}
       </div>
     </div>
   );

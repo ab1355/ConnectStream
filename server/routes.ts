@@ -265,6 +265,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/spaces", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
 
       const validation = insertSpaceSchema.safeParse(req.body);
       if (!validation.success) {
@@ -292,6 +293,29 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error creating space:", error);
       res.status(500).json({ error: "Failed to create space" });
+    }
+  });
+
+  // Add this route after the existing space routes
+  app.delete("/api/spaces/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
+
+      const spaceId = parseInt(req.params.id);
+
+      // First delete related records
+      await db.delete(spaceMembers)
+        .where(eq(spaceMembers.spaceId, spaceId));
+
+      // Then delete the space
+      await db.delete(spaces)
+        .where(eq(spaces.id, spaceId));
+
+      res.sendStatus(200);
+    } catch (error) {
+      console.error("Error deleting space:", error);
+      res.status(500).json({ error: "Failed to delete space" });
     }
   });
 
@@ -402,6 +426,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post("/api/courses", async (req, res) => {
     try {
       if (!req.isAuthenticated()) return res.sendStatus(401);
+      if (req.user.role !== "admin") return res.sendStatus(403);
 
       const validation = insertCourseSchema.safeParse(req.body);
       if (!validation.success) {

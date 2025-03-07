@@ -1,9 +1,14 @@
 import { Card, CardContent, CardFooter, CardHeader } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Users, Lock, Eye, EyeOff, Image as ImageIcon } from "lucide-react";
+import { Users, Lock, Eye, EyeOff, Image as ImageIcon, Trash2 } from "lucide-react";
+import { useAuth } from "@/hooks/use-auth";
+import { useMutation } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
 
 interface SpaceCardProps {
+  id: number;
   name: string;
   description: string;
   memberCount: number;
@@ -11,7 +16,36 @@ interface SpaceCardProps {
   imageUrl?: string;
 }
 
-export function SpaceCard({ name, description, memberCount, privacy, imageUrl }: SpaceCardProps) {
+export function SpaceCard({ id, name, description, memberCount, privacy, imageUrl }: SpaceCardProps) {
+  const { user } = useAuth();
+  const { toast } = useToast();
+  const isAdmin = user?.role === "admin";
+
+  const deleteSpaceMutation = useMutation({
+    mutationFn: async () => {
+      const response = await fetch(`/api/spaces/${id}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) {
+        throw new Error("Failed to delete space");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/spaces"] });
+      toast({
+        title: "Space deleted",
+        description: "The space has been successfully deleted.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to delete space. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const privacyConfig = {
     public: {
       icon: Eye,
@@ -65,7 +99,19 @@ export function SpaceCard({ name, description, memberCount, privacy, imageUrl }:
           <Users className="h-4 w-4 mr-1" />
           {memberCount} members
         </div>
-        <Button variant="outline" size="sm">Join Space</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm">Join Space</Button>
+          {isAdmin && (
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={() => deleteSpaceMutation.mutate()}
+              disabled={deleteSpaceMutation.isPending}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </CardFooter>
     </Card>
   );
