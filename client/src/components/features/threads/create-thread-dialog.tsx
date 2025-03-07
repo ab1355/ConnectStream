@@ -76,17 +76,21 @@ export function CreateThreadDialog() {
     },
   });
 
-  const handleSubmit = form.handleSubmit((data) => {
+  const onSubmit = form.handleSubmit((data) => {
     createThreadMutation.mutate(data);
   });
 
+  const CreateButton = (
+    <Button>
+      <Plus className="h-4 w-4 mr-2" />
+      Create Thread
+    </Button>
+  );
+
   return (
-    <Dialog modal open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="flex items-center">
-          <Plus className="h-4 w-4 mr-2" />
-          Create Thread
-        </Button>
+        {CreateButton}
       </DialogTrigger>
 
       <DialogContent>
@@ -98,7 +102,7 @@ export function CreateThreadDialog() {
         </DialogHeader>
 
         <Form {...form}>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={onSubmit} className="space-y-4">
             <FormField
               control={form.control}
               name="title"
