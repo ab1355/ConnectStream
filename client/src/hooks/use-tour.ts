@@ -27,8 +27,12 @@ export const useTourStore = create<TourStore>()(
       currentTour: null,
       currentStep: 0,
       completedTours: [],
-      setCurrentTour: (tourId) =>
-        set({ currentTour: tourId, currentStep: 0 }),
+      setCurrentTour: (tourId) => {
+        const hasTourBeenCompleted = get().completedTours.includes(tourId || "");
+        if (!hasTourBeenCompleted) {
+          set({ currentTour: tourId, currentStep: 0 });
+        }
+      },
       nextStep: () =>
         set((state) => ({ currentStep: state.currentStep + 1 })),
       previousStep: () =>
@@ -52,11 +56,11 @@ export const useTourStore = create<TourStore>()(
 
 export const useTour = () => {
   const store = useTourStore();
-  
+
   return {
     ...store,
     startTour: (tourId: string) => {
-      if (!store.hasTourBeenCompleted(tourId)) {
+      if (!store.hasTourBeenCompleted(tourId) && store.currentTour !== tourId) {
         store.setCurrentTour(tourId);
       }
     },

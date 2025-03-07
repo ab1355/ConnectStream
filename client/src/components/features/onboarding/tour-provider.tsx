@@ -18,9 +18,10 @@ export function TourProvider({ tourId, steps, children }: TourProviderProps) {
   }, []);
 
   useEffect(() => {
-    // Start tour automatically if it hasn't been completed
-    startTour(tourId);
-  }, [tourId, startTour]);
+    if (mounted && !currentTour) {
+      startTour(tourId);
+    }
+  }, [mounted, tourId, currentTour, startTour]);
 
   if (!mounted) return <>{children}</>;
 
@@ -69,7 +70,7 @@ export function TourProvider({ tourId, steps, children }: TourProviderProps) {
         }
         side={currentStepData.placement}
       >
-        <div id={currentStepData.targetId} />
+        <div id={currentStepData.targetId} className="contents" />
       </TourTooltip>
     </>
   );
