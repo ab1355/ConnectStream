@@ -2,7 +2,6 @@ import { Header } from "@/components/layout/header";
 import { Sidebar } from "@/components/layout/sidebar";
 import { SpaceGrid } from "@/components/features/spaces/space-grid";
 import { SpaceFilter } from "@/components/features/spaces/space-filter";
-import { CreateSpaceDialog } from "@/components/features/spaces/create-space-dialog";
 import { CreatePollDialog } from "@/components/features/polls/create-poll-dialog";
 import { CreateThreadDialog } from "@/components/features/threads/create-thread-dialog";
 
@@ -19,7 +18,6 @@ export default function SpacesPage() {
               <div className="flex gap-2">
                 <CreateThreadDialog />
                 <CreatePollDialog />
-                <CreateSpaceDialog />
               </div>
             </div>
             <SpaceFilter />
